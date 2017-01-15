@@ -1,0 +1,1273 @@
+<MvFUNCTION NAME = "Module_Description" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.module:code"		VALUE = "TGCF">
+	<MvASSIGN NAME = "l.module:name"		VALUE = "Custom Forms">
+	<MvASSIGN NAME = "l.module:provider"	VALUE = "Tess Guefen">
+	<MvASSIGN NAME = "l.module:version"		VALUE = "1.000">
+	<MvASSIGN NAME = "l.module:api_ver"		VALUE = "9.00">
+	<MvASSIGN NAME = "l.module:description"	VALUE = "I'll put a more descriptive description later.">
+	<MvASSIGN NAME = "l.module:features"	VALUE = "system, vis_system, data_store, json, clientside">
+</MvFUNCTION>
+
+<MvCOMMENT>
+| =============================
+| Module Installation
+| =============================
+
+sXX_TGCF_Forms
++-------------------+-----------+-----------+
+|        id         |   code    |   name    |
++-------------------+-----------+-----------+
+| Generated StorKey | Form Code | Form Name |
++-------------------+-----------+-----------+
+
+sXX_TGCF_Fields
++--------------------+--------------------+-------------+--------+-----------------------+----------------+---------------+
+|         id         |      form_id       |    code     | prompt |         type          |    required    |  disp_order   |
++--------------------+--------------------+-------------+--------+-----------------------+----------------+---------------+
+| Generated StoreKey | Associated Form ID | Unique Code | Prompt | text, textarea, radio | is it required | Display Order |
+|                    |                    |             |        | checkbox, select      |                |               |
++--------------------+--------------------+-------------+--------+-----------------------+----------------+---------------+
+
+sXX_TGCF_Options
++--------------------+---------------------+------+--------+---------------+
+|         id         |      field_id       | code | prompt |  disp_order   |
++--------------------+---------------------+------+--------+---------------+
+| Generated StoreKey | Associated Field ID | Code | Prompt | Display Order |
++--------------------+---------------------+------+--------+---------------+
+
+sXX_TGCF_Data
++--------------------+--------------------+--------------------+---------------------+------------------+
+|      group_id      |         id         |      form_id       |      field_id       |      value       |
++--------------------+--------------------+--------------------+---------------------+------------------+
+| Generated StoreKey | Generated StoreKey | Associated Form ID | Associated Field ID | Submission Value |
++--------------------+--------------------+--------------------+---------------------+------------------+
+
++-----------------+
+|  StoreKeys      |
++-----------------+
+| TGCF_Forms      |
+| TGCF_Fields     |
+| TGCF_Options    |
+| TGCF_Data       |
+| TGCF_Data_Group |
++-----------------+
+</MvCOMMENT>
+
+<MvFUNCTION NAME = "Module_Install_Store" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvCOMMENT> <!-- Creation of TGCF_Forms --> </MvCOMMENT>
+	<MvQUERY NAME	= "Merchant"
+			 QUERY	= "{ 'CREATE TABLE ' $ g.Store_Table_Prefix $ 'TGCF_Forms
+			 				(
+			 					id		' $ [ g.Module_Library_Native_DBAPI ].DB_Type_NUMBER( 0, 0 )	$ ',
+			 					name	' $ [ g.Module_Library_Native_DBAPI ].DB_Type_CHAR( 255 )		$ ',
+			 					code	' $ [ g.Module_Library_Native_DBAPI ].DB_Type_CHAR( 255 )		$ '
+			 				) ' }">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCF-INSTALL-1000:', 'An error occured while creating the table TGCF_Forms. Please make sure this table was not already created.' ) }">
+	</MvIF>
+
+	<MvCOMMENT> <!-- Creation of TGCF_Fields --> </MvCOMMENT>
+	<MvQUERY NAME	= "Merchant"
+			 QUERY	= "{ 'CREATE TABLE ' $ g.Store_Table_Prefix $ 'TGCF_Fields
+			 				(
+			 					id			' $ [ g.Module_Library_Native_DBAPI ].DB_Type_NUMBER( 0, 0 )	$ ',
+			 					form_id		' $ [ g.Module_Library_Native_DBAPI ].DB_Type_NUMBER( 0, 0 )	$ ',
+			 					code		' $ [ g.Module_Library_Native_DBAPI ].DB_Type_CHAR( 255 )		$ ',
+			 					prompt		' $ [ g.Module_Library_Native_DBAPI ].DB_Type_CHAR( 255 )		$ ',
+			 					type		' $ [ g.Module_Library_Native_DBAPI ].DB_Type_CHAR( 255 )		$ ',
+			 					required	' $ [ g.Module_Library_Native_DBAPI ].DB_Type_BOOL()			$ ',
+			 					disp_order	' $ [ g.Module_Library_Native_DBAPI ].DB_Type_NUMBER( 0, 0 )	$ '
+			 				) ' }">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Forms' }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCF-INSTALL-1001:', 'An error occured while creating the table TGCF_Fields. Please make sure this table was not already created.' ) }">
+	</MvIF>
+
+	<MvCOMMENT> <!-- Creation of TGCF_Options --> </MvCOMMENT>
+	<MvQUERY NAME	= "Merchant"
+			 QUERY	= "{ 'CREATE TABLE ' $ g.Store_Table_Prefix $ 'TGCF_Options
+			 				(
+			 					id			' $ [ g.Module_Library_Native_DBAPI ].DB_Type_NUMBER( 0, 0 )	$ ',
+			 					field_id	' $ [ g.Module_Library_Native_DBAPI ].DB_Type_NUMBER( 0, 0 )	$ ',
+			 					code		' $ [ g.Module_Library_Native_DBAPI ].DB_Type_CHAR( 255 )		$ ',
+			 					prompt		' $ [ g.Module_Library_Native_DBAPI ].DB_Type_CHAR( 255 )		$ ',
+			 					disp_order	' $ [ g.Module_Library_Native_DBAPI ].DB_Type_NUMBER( 0, 0 )	$ '
+			 				) ' }">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Forms' }">
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Fields' }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCF-INSTALL-1002:', 'An error occured while creating the table TGCF_Options. Please make sure this table was not already created.' ) }">
+	</MvIF>
+
+	<MvCOMMENT> <!-- Creation of TGCF_Data --> </MvCOMMENT>
+	<MvQUERY NAME	= "Merchant"
+			 QUERY	= "{ 'CREATE TABLE ' $ g.Store_Table_Prefix $ 'TGCF_Data
+			 				(
+			 					group_id	' $ [ g.Module_Library_Native_DBAPI ].DB_Type_NUMBER( 0, 0 )	$ ',
+			 					id			' $ [ g.Module_Library_Native_DBAPI ].DB_Type_NUMBER( 0, 0 )	$ ',
+			 					form_id		' $ [ g.Module_Library_Native_DBAPI ].DB_Type_NUMBER( 0, 0 )	$ ',
+			 					field_id	' $ [ g.Module_Library_Native_DBAPI ].DB_Type_NUMBER( 0, 0 )	$ ',
+			 					value		' $ [ g.Module_Library_Native_DBAPI ].DB_Type_CHAR( 255 )		$ '
+			 				) ' }">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Forms' }">
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Fields' }">
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Options' }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCF-INSTALL-1003:', 'An error occured while creating the table TGCF_Data. Please make sure this table was not already created.' ) }">
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Library_DB ].StoreKey_Insert( 'TGCF_Forms', 1 ) }">
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Forms' }">
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Fields' }">
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Options' }">
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Data' }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCF-INSTALL-1004:', 'An error occured while creating the storekey, TGCF_Forms. Please make sure this does not already exsist.' ) }">
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Library_DB ].StoreKey_Insert( 'TGCF_Fields', 1 ) }">
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Forms' }">
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Fields' }">
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Options' }">
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Data' }">
+		<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCF_Forms' ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCF-INSTALL-1005:', 'An error occured while creating the storekey, TGCF_Fields. Please make sure this does not already exsist.' ) }">
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Library_DB ].StoreKey_Insert( 'TGCF_Options', 1 ) }">
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Forms' }">
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Fields' }">
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Options' }">
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Data' }">
+		<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCF_Forms' ) }">
+		<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCF_Fields' ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCF-INSTALL-1006:', 'An error occured while creating the storekey, TGCF_Options. Please make sure this does not already exsist.' ) }">
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Library_DB ].StoreKey_Insert( 'TGCF_Data', 1 ) }">
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Forms' }">
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Fields' }">
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Options' }">
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Data' }">
+		<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCF_Forms' ) }">
+		<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCF_Fields' ) }">
+		<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCF_Options' ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCF-INSTALL-1007:', 'An error occured while creating the storekey, TGCF_Data. Please make sure this does not already exsist.' ) }">
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Library_DB ].StoreKey_Insert( 'TGCF_Data_Group', 1 ) }">
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Forms' }">
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Fields' }">
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Options' }">
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Data' }">
+		<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCF_Forms' ) }">
+		<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCF_Fields' ) }">
+		<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCF_Options' ) }">
+		<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCF_Data' ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCF-INSTALL-1007:', 'An error occured while creating the storekey, TGCF_Data. Please make sure this does not already exsist.' ) }">
+	</MvIF>
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Module_Upgrade_Store" PARAMETERS = "module var, version" STANDARDOUTPUTLEVEL = "" ERROROUTPUTLEVEL = "">
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Module_Uninstall_Store" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "" ERROROUTPUTLEVEL = "">
+	<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Forms' }">
+	<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Fields' }">
+	<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Options' }">
+	<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCF_Data' }">
+	<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCF_Forms' ) }">
+	<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCF_Fields' ) }">
+	<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCF_Options' ) }">
+	<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCF_Data' ) }">
+	<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCF_Data_Group' ) }">
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+
+
+
+
+
+
+
+
+
+<MvCOMMENT>
+| =============================
+| System [system]
+| =============================
+</MvCOMMENT>
+
+<MvFUNCTION NAME = "SystemModule_Action" PARAMETERS = "module var, action" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "SystemModule_Screen" PARAMETERS = "module var, screen" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "SystemModule_UIException" PARAMETERS = "module var, exception" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+
+
+
+
+
+
+
+
+
+<MvCOMMENT>
+| =============================
+| System Extension Settings [Visual]
+| =============================
+</MvCOMMENT>
+
+<MvFUNCTION NAME = "Module_System_Tabs" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvFUNCTIONRETURN VALUE = "TGCF_SETT:Custom Forms - Settings,TGCF_DATA:Custom Forms - Data">
+</MvFUNCTION>
+
+
+<MvFUNCTION NAME = "Module_System_Head" PARAMETERS = "module var, tab" STANDARDOUTPUTLEVEL = "text, html, compresswhitespace">
+	<MvIF EXPR = "{ l.tab NE 'TGCF_SETT' AND l.tab NE 'TGCF_DATA' }">
+		<MvFUNCTIONRETURN VALUE = 1>
+	</MvIF>
+
+	<MvEVAL EXPR = "{ [ g.Module_Admin ].Element_MMBatchList_JavaScript() }">
+	<MvEVAL EXPR = "{ [ g.Module_Admin ].Element_MMBatchList_CSS() }">
+
+	<MvEVAL EXPR = "{ [ g.Module_Admin ].JavaScript_Set_A_Variable( 'TGCF_Tab', g.Tab ) }">
+
+	<MvIF EXPR = "{ g.Form_ID AND l.tab EQ 'TGCF_SETT' }">
+		<MvEVAL EXPR = "{ [ g.Module_Admin ].JavaScript_Set_A_Variable( 'Form_ID', g.Form_ID ) }">
+		<script language="JavaScript" src="{ g.clientside_url $ 'Module_Code=' $ encodeattribute( l.module:code ) $ '&Filename=Fields_Functions.js' }"></script>
+		<script language="JavaScript" src="{ g.clientside_url $ 'Module_Code=' $ encodeattribute( l.module:code ) $ '&Filename=Fields_Batchlist.js' }"></script>
+		<script language="JavaScript">
+			MMScreen_LoadFinished( function() { new Fields_Batchlist( Form_ID ); } );
+		</script>
+	<MvELSEIF EXPR = "{ g.Form_ID AND l.tab EQ 'TGCF_DATA' }">
+		<MvEVAL EXPR = "{ [ g.Module_Admin ].JavaScript_Set_A_Variable( 'Form_ID', g.Form_ID ) }">
+		<script language="JavaScript" src="{ g.clientside_url $ 'Module_Code=' $ encodeattribute( l.module:code ) $ '&Filename=Data_Functions.js' }"></script>
+		<script language="JavaScript" src="{ g.clientside_url $ 'Module_Code=' $ encodeattribute( l.module:code ) $ '&Form_Id=' $ g.Form_ID $ '&Filename=Data_Batchlist.js' }"></script>
+		<script language="JavaScript">
+			MMScreen_LoadFinished( function() { new Data_Batchlist(); } );
+		</script>
+	<MVELSE>
+		<script language="JavaScript" src="{ g.clientside_url $ 'Module_Code=' $ encodeattribute( l.module:code ) $ '&Filename=Forms_Functions.js' }"></script>
+		<script language="JavaScript" src="{ g.clientside_url $ 'Module_Code=' $ encodeattribute( l.module:code ) $ '&Filename=Forms_Batchlist.js' }"></script>
+		<script language="JavaScript">
+			MMScreen_LoadFinished( function() { new Forms_Batchlist(); } );
+		</script>
+	</MVIF>
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+
+<MvFUNCTION NAME = "Module_System_Content" PARAMETERS = "module var, tab, load_fields" STANDARDOUTPUTLEVEL = "text, html, compresswhitespace">
+	<MvIF EXPR = "{ l.tab NE 'TGCF_SETT' AND l.tab NE 'TGCF_DATA' }">
+		<MvFUNCTIONRETURN VALUE = 1>
+	</MvIF>
+	<MvEVAL EXPR = "{ [ g.Module_Admin ].Element_MMBatchList_HTML() }">
+	<MvIF EXPR = "{ l.tab EQ 'TGCF_SETT' AND g.Form_ID }">
+		<div id="Fields_Batchlist_id"></div>
+	<MvELSEIF EXPR = "{ l.tab EQ 'TGCF_DATA' AND g.Form_ID }">
+		<div id="Data_Batchlist_id"></div>
+	<MvELSE>
+		<div id="Forms_Batchlist_id"></div>
+	</MvIF>
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Module_System_Update" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "html, text, compresswhitespace">
+	<MvIF EXPR = "{ g.tab NE 'TGCF_SETT' AND g.tab NE 'TGCF_DATA' }">
+		<MvFUNCTIONRETURN VALUE = 1>
+	</MvIF>
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+
+<MvFUNCTION NAME = "Module_System_Validate" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+
+
+
+
+
+
+
+<MvCOMMENT>
+| ============================
+| JavaScript Object Notation Feature (json)
+| ============================
+</MvCOMMENT>
+
+<MvFUNCTION NAME = "Module_JSON" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "html, text, compresswhitespace" ERROROUTPUTLEVEL = "">
+	<MvIF EXPR = "{ NOT [ g.Module_JSON ].JSON_Store_Open() }">
+		<MvFUNCTIONRETURN>
+	</MvIF>
+
+	<MvIF EXPR = "{ g.Module_Function EQ 'Form_Load_Query' }">
+		<MvEVAL EXPR = "{ JSON_Load_Forms() }">
+	</MvIF>
+
+	<MvIF EXPR = "{ g.Module_Function EQ 'JSON_Form_Data_Load_Query' }">
+		<MvEVAL EXPR = "{ JSON_Form_Data_Load_Query( g.Form_ID ) }">
+	</MvIF>
+
+	<MvIF EXPR = "{ g.Module_Function EQ 'Fields_List_Load_Query' }">
+		<MvEVAL EXPR = "{ JSON_Load_Fields( g.Form_ID ) }">
+	</MvIF>
+
+	<MvIF EXPR = "{ g.Module_Function EQ 'Load_Data_JSON_Columns' }">
+		<MvEVAL EXPR = "{ Data_JSON_Columns( g.Form_ID ) }">
+	</MvIF>
+
+	<MvIF EXPR = "{ g.Module_Function EQ 'Form_Insert' }">
+		<MvIF EXPR = "{ Add_Form( g.code, g.name ) }">
+			<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Success() }">
+		<MvELSE>
+			<MvFUNCTIONRETURN VALUE = "{ CFJSON_Response_FieldError( g.Validation_Message ) }" />
+		</MvIF>
+	</MvIF>
+
+	<MvIF EXPR = "{ g.Module_Function EQ 'Form_Delete' }">
+		<MvIF EXPR = "{ Delete_Form( g.Form_Id ) }">
+			<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Success() }">
+		<MvELSE>
+			<MvFUNCTIONRETURN VALUE = "{ CFJSON_Response_FieldError( 'An Error has occured while trying to delete the form.' ) }" />
+		</MvIF>
+	</MvIF>
+
+	<MvIF EXPR = "{ g.Module_Function EQ 'Form_Update' }">
+		<MvIF EXPR = "{ Update_Form( g.Forms_ID, g.code, g.name ) }">
+			<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Success() }">
+		<MvELSE>
+			<MvFUNCTIONRETURN VALUE = "{ CFJSON_Response_FieldError( g.Validation_Message ) }" />
+		</MvIF>
+	</MvIF>
+
+	<MvIF EXPR = "{ g.Module_Function EQ 'Field_Insert' }">
+		<MvIF EXPR = "{ Add_Field( g.form_id, g.code, g.prompt, g.type, g.required ) }">
+			<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Success() }">
+		<MvELSE>
+			<MvFUNCTIONRETURN VALUE = "{ CFJSON_Response_FieldError( g.Validation_Message ) }" />
+		</MvIF>
+	</MvIF>
+
+	<MvIF EXPR = "{ g.Module_Function EQ 'Field_Update' }">
+		<MvIF EXPR = "{ Update_Field( g.id, g.code, g.prompt, g.type, g.required ) }">
+			<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Success() }">
+		<MvELSE>
+			<MvFUNCTIONRETURN VALUE = "{ CFJSON_Response_FieldError( g.Validation_Message ) }" />
+		</MvIF>
+	</MvIF>
+
+	<MvIF EXPR = "{ g.Module_Function EQ 'Option_Insert' }">
+		<MvIF EXPR = "{ Add_Option( g.Field_Id, g.code, g.prompt ) }">
+			<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Success() }">
+		<MvELSE>
+			<MvFUNCTIONRETURN VALUE = "{ CFJSON_Response_FieldError( g.Validation_Message ) }" />
+		</MvIF>
+	</MvIF>
+
+	<MvIF EXPR = "{ g.Module_Function EQ 'Field_Delete' }">
+		<MvIF EXPR = "{ Delete_Field( g.Field_Id ) }">
+			<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Success() }">
+		<MvELSE>
+			<MvFUNCTIONRETURN VALUE = "{ CFJSON_Response_FieldError( g.Validation_Message ) }" />
+		</MvIF>
+	</MvIF>
+
+	<MvIF EXPR = "{ g.Module_Function EQ 'Option_Update' }">
+		<MvIF EXPR = "{ Update_Option( g.id, g.code, g.prompt ) }">
+			<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Success() }">
+		<MvELSE>
+			<MvFUNCTIONRETURN VALUE = "{ CFJSON_Response_FieldError( g.Validation_Message ) }" />
+		</MvIF>
+	</MvIF>
+
+	<MvIF EXPR = "{ g.Module_Function EQ 'Option_Delete' }">
+		<MvIF EXPR = "{ Delete_Option( g.id ) }">
+			<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Success() }">
+		<MvELSE>
+			<MvFUNCTIONRETURN VALUE = "{ CFJSON_Response_FieldError( g.Validation_Message ) }" />
+		</MvIF>
+	</MvIF>
+</MvFUNCTION>
+
+
+
+
+
+
+
+
+
+
+<MvCOMMENT>
+| ============================
+| Client Side Feature (clienside)
+| ============================
+</MvCOMMENT>
+<MvFUNCTION NAME = "Module_Clientside" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "text" ERROROUTPUTLEVEL = "">
+	<MvIF EXPR = "{ g.Filename EQ 'Forms_Batchlist.js' }">			<MvEVAL EXPR = "{ [ g.Module_Clientside ].Module_Content_Type( l.module, 'text/javascript' ) }"> <MIVA STANDARDOUTPUTLEVEL = "text, html"><MvINCLUDE FILE = "js/Forms_Batchlist.js"><MIVA STANDARDOUTPUTLEVEL = "">
+	<MvELSEIF EXPR = "{ g.Filename EQ 'Forms_Functions.js' }">		<MvEVAL EXPR = "{ [ g.Module_Clientside ].Module_Content_Type( l.module, 'text/javascript' ) }"> <MIVA STANDARDOUTPUTLEVEL = "text, html"><MvINCLUDE FILE = "js/Forms_Functions.js"><MIVA STANDARDOUTPUTLEVEL = "">
+	<MvELSEIF EXPR = "{ g.Filename EQ 'Fields_Batchlist.js' }">		<MvEVAL EXPR = "{ [ g.Module_Clientside ].Module_Content_Type( l.module, 'text/javascript' ) }"> <MIVA STANDARDOUTPUTLEVEL = "text, html"><MvINCLUDE FILE = "js/Fields_Batchlist.js"><MIVA STANDARDOUTPUTLEVEL = "">
+	<MvELSEIF EXPR = "{ g.Filename EQ 'Fields_Functions.js' }">		<MvEVAL EXPR = "{ [ g.Module_Clientside ].Module_Content_Type( l.module, 'text/javascript' ) }"> <MIVA STANDARDOUTPUTLEVEL = "text, html"><MvINCLUDE FILE = "js/Fields_Functions.js"><MIVA STANDARDOUTPUTLEVEL = "">
+	<MvELSEIF EXPR = "{ g.Filename EQ 'Data_Batchlist.js' }">		<MvEVAL EXPR = "{ [ g.Module_Clientside ].Module_Content_Type( l.module, 'text/javascript' ) }"> <MIVA STANDARDOUTPUTLEVEL = "text, html"><MvINCLUDE FILE = "js/Data_Batchlist.js"><MIVA STANDARDOUTPUTLEVEL = "">
+	<MvELSEIF EXPR = "{ g.Filename EQ 'Data_Functions.js' }">		<MvEVAL EXPR = "{ [ g.Module_Clientside ].Module_Content_Type( l.module, 'text/javascript' ) }"> <MIVA STANDARDOUTPUTLEVEL = "text, html"><MvINCLUDE FILE = "js/Data_Functions.js"><MIVA STANDARDOUTPUTLEVEL = "">
+	<MvELSE>
+		<MvASSIGN NAME = "l.null"	VALUE = "{ miva_output_header( 'Status', '404 Not Found' ) }">
+	</MvIF>
+</MvFUNCTION>
+
+
+
+
+
+
+<MvCOMMENT>
+| =============================
+| Module Functions
+| =============================
+
+CFJSON_Response_FieldError( message )
+
+<!-- FORM FUNCTIONS -->
+Is_Unique_Form( code )
+Add_Form( code, name )
+Delete_Form( id )
+Update_Form( id, code, name )
+Load_Form( id )
+
+<!-- FIELD FUNCTIONS -->
+Is_Unique_Field( form_id, code )
+Add_Field( form_id, code, prompt, type, required )
+Delete_Field( id )
+Update_Field( id, code, prompt, type, required )
+Load_Field( id )
+
+<!-- OPTION FUNCTIONS -->
+Is_Unique_Option( field_id, code )
+Add_Option( field_id, code, prompt )
+Delete_Option( id )
+Update_Option( id, code, prompt )
+Load_Option( id )
+
+<!-- UTILITY FUNCTIONS -->
+Delete_All_Field_Options( field_id )
+Load_Field_Options( field_id )
+Data_JSON_Columns( form_id )
+
+<!-- JSON FUNCTIONS -->
+JSON_Load_Forms()
+JSON_Load_Fields( form_id )
+JSON_Form_Data_Load_Query( form_id )
+
+</MvCOMMENT>
+
+<MvFUNCTION NAME = "CFJSON_Response_FieldError" PARAMETERS = "message" STANDARDOUTPUTLEVEL = "text, html, compresswhitespace">
+	{
+		"success":				0,
+		"error_code":			"TGCF-MOD-1003",
+		"error_message":		"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( l.message ) }">",
+
+		"validation_error":		true,
+		"error_field":			"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( l.error_field ) }">",
+		"error_field_message":	"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( l.message ) }">"
+	}
+
+	<MvFUNCTIONRETURN VALUE = 0>
+</MvFUNCTION>
+
+<MvCOMMENT> <!-- Form Functions --> </MvCOMMENT>
+
+<MvFUNCTION NAME = "Is_Unique_Form" PARAMETERS = "code" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvOPENVIEW	NAME	= "Merchant"
+				VIEW	= "TGCF_Forms"
+				QUERY	= "{ 'SELECT id FROM ' $ g.Store_Table_Prefix $ 'TGCF_Forms WHERE code = ?'}"
+				FIELDS	= "l.code">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCF-MOD-1002:', 'An error occurred during Is_Unique_Form().' ) }">
+	</MvIF>
+
+	<MvASSIGN NAME = "l.form_id" VALUE = "{ TGCF_Forms.d.id }">
+
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Forms">
+
+	<MvIF EXPR = "{ l.form_id }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ 'Please Specify a unique code for your form.' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Add_Form" PARAMETERS = "code, name" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.code" VALUE = "{ trim(l.code) }">
+	<MvASSIGN NAME = "l.name" VALUE = "{ trim(l.name) }">
+
+	<MvIF EXPR = "{ ISNULL l.code }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ 'The form code may not be blank.' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.name }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ 'The form name may not be blank.' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Admin ].Validate_Code( l.code ) }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT Is_Unique_Form( l.code ) }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+	<MvASSIGN NAME = "l.form_id" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Generate( 'TGCF_Forms' ) }">
+
+	<MvQUERY	NAME	= "Merchant"
+				QUERY	= "{ 'INSERT INTO ' $ g.Store_Table_Prefix $ 'TGCF_Forms
+							(id, code, name)
+							VALUES
+							(?, ?, ?)' }"
+				FIELDS = "l.form_id, l.code, l.name">
+
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvQUERY_Error }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Delete_Form" PARAMETERS = "id" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.id" VALUE = "{ trim( l.id ) }">
+	<MvQUERY	NAME	= "Merchant"
+				QUERY	= "{ 'DELETE FROM ' $ g.Store_Table_Prefix $ 'TGCF_Forms WHERE id = ?' }"
+				FIELDS	= "l.id">
+
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvQUERY_Error }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Update_Form" PARAMETERS ="id, code, name" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.id" VALUE = "{ trim( l.id ) }">
+	<MvASSIGN NAME = "l.name" VALUE = "{ trim( l.name ) }">
+	<MvASSIGN NAME = "l.code" VALUE = "{ trim( l.code ) }">
+
+	<MvIF EXPR = "{ ISNULL l.id }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ 'Error: Missing Form ID.' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.name }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ 'Form name can not be blank.' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Admin ].Validate_Code( l.code ) }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvASSIGN NAME = "l.loaded_form" VALUE = "{ Load_Form( l.id ) }">
+	<MvIF EXPR = "{ l.loaded_form:code NE l.code }">
+		<MvIF EXPR = "{ NOT Is_Unique_Form( l.code ) }">
+			<MvFUNCTIONRETURN VALUE = 0>
+		</MvIF>
+	</MvIF>
+
+	<MvQUERY	NAME	= "Merchant"
+				QUERY	= "{ 'UPDATE ' $ g.Store_Table_Prefix $ 'TGCF_Forms
+								SET
+									name = ?,
+									code = ?
+								WHERE
+									id = ?' }"
+				FIELDS	= "l.name, l.code, l.id">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvQUERY_Error }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Load_Form" PARAMETERS = "id" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.id" VALUE = "{ trim( l.id ) }">
+	<MvOPENVIEW	NAME	= "Merchant"
+				VIEW	= "TGCF_Forms"
+				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCF_Forms WHERE id = ?' }"
+				FIELDS	= "l.id">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvOPENVIEW_Error }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvASSIGN NAME = "l.loaded_form"	MEMBER = "id"	VALUE = "{ TGCF_Forms.d.id }">
+	<MvASSIGN NAME = "l.loaded_form"	MEMBER = "code"	VALUE = "{ TGCF_Forms.d.code }">
+	<MvASSIGN NAME = "l.loaded_form"	MEMBER = "name"	VALUE = "{ TGCF_Forms.d.name }">
+
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Forms">
+	<MvFUNCTIONRETURN VALUE = "{ l.loaded_form }">
+</MvFUNCTION>
+
+<MvCOMMENT> <!-- /Form Functions --> </MvCOMMENT>
+
+<MvCOMMENT> <!-- Field Functions --> </MvCOMMENT>
+
+<MvFUNCTION NAME = "Is_Unique_Field" PARAMETERS = "form_id, code" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvOPENVIEW	NAME	= "Merchant"
+				VIEW	= "TGCF_Fields"
+				QUERY	= "{ 'SELECT id FROM ' $ g.Store_Table_Prefix $ 'TGCF_Fields WHERE code = ? AND form_id = ?'}"
+				FIELDS	= "l.code, l.form_id">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCF-MOD-1002:', 'An error occurred during Is_Unique_Form().' ) }">
+	</MvIF>
+
+	<MvASSIGN NAME = "l.form_id" VALUE = "{ TGCF_Fields.d.id }">
+
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Fields">
+
+	<MvIF EXPR = "{ l.form_id }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ 'Please Specify a unique code for your Field.' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Add_Field" PARAMETERS = "form_id, code, prompt, type, required" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.form_id" VALUE = "{ trim(l.form_id) }">
+	<MvASSIGN NAME = "l.code" VALUE = "{ trim(l.code) }">
+	<MvASSIGN NAME = "l.prompt" VALUE = "{ trim(l.prompt) }">
+	<MvASSIGN NAME = "l.type" VALUE = "{ trim(l.type) }">
+	<MvASSIGN NAME = "l.required" VALUE = "{ trim(l.required) }">
+
+	<MvIF EXPR = "{ ISNULL l.code }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ 'The Field code may not be blank.' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.prompt }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ 'The Field Prompt may not be blank.' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.type }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ 'The Field type may not be blank.' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Admin ].Validate_Code( l.code ) }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT Is_Unique_Field( l.form_id, l.code ) }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+	<MvASSIGN NAME = "l.id" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Generate( 'TGCF_Fields' ) }">
+
+	<MvQUERY	NAME	= "Merchant"
+				QUERY	= "{ 'INSERT INTO ' $ g.Store_Table_Prefix $ 'TGCF_Fields
+							(id, form_id, code, prompt, type, required)
+							VALUES
+							(?, ?, ?, ?, ?, ?)' }"
+				FIELDS = "l.id, l.form_id, l.code, l.prompt, l.type, l.required">
+
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvQUERY_Error }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Delete_Field" PARAMETERS = "id" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.id" VALUE = "{ trim( l.id ) }">
+	<MvQUERY	NAME	= "Merchant"
+				QUERY	= "{ 'DELETE FROM ' $ g.Store_Table_Prefix $ 'TGCF_Fields WHERE id = ?' }"
+				FIELDS	= "l.id">
+
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvQUERY_Error }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT Delete_All_Field_Options( l.id ) }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvQUERY_Error }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Update_Field" PARAMETERS ="id, code, prompt, type, required" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.id" VALUE = "{ trim( l.id ) }">
+	<MvASSIGN NAME = "l.code" VALUE = "{ trim( l.code ) }">
+	<MvASSIGN NAME = "l.prompt" VALUE = "{ trim( l.prompt ) }">
+	<MvASSIGN NAME = "l.type" VALUE = "{ trim( l.type ) }">
+	<MvASSIGN NAME = "l.required" VALUE = "{ trim( l.required ) }">
+
+	<MvIF EXPR = "{ ISNULL l.id }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ 'Error: Missing Field ID.' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.prompt }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ 'Field prompt can not be blank.' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Admin ].Validate_Code( l.code ) }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvASSIGN NAME = "l.loaded_field" VALUE = "{ Load_Field( l.id ) }">
+	<MvIF EXPR = "{ l.loaded_field:code NE l.code }">
+		<MvIF EXPR = "{ NOT Is_Unique_Field( l.loaded_field:form_id, l.code ) }">
+			<MvFUNCTIONRETURN VALUE = 0>
+		</MvIF>
+	</MvIF>
+
+	<MvIF EXPR = "{ l.loaded_field:type EQ 'radio' OR l.loaded_field:type EQ 'select' }">
+		<MvIF EXPR = "{ l.type NE 'radio' AND l.type NE 'select' }">
+			<MvIF EXPR = "{ NOT Delete_All_Field_Options( l.id ) }">
+				<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvQUERY_Error }">
+				<MvFUNCTIONRETURN VALUE = 0>
+			</MvIF>
+		</MvIF>
+	</MvIF>
+
+	<MvQUERY	NAME	= "Merchant"
+				QUERY	= "{ 'UPDATE ' $ g.Store_Table_Prefix $ 'TGCF_Fields
+								SET
+									code = ?,
+									prompt = ?,
+									type = ?,
+									required = ?
+								WHERE
+									id = ?' }"
+				FIELDS	= "l.code, l.prompt, l.type, l.required, l.id">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvQUERY_Error }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Load_Field" PARAMETERS = "id" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.id" VALUE = "{ trim( l.id ) }">
+
+	<MvOPENVIEW	NAME	= "Merchant"
+				VIEW	= "TGCF_Fields"
+				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCF_Fields WHERE id = ?' }"
+				FIELDS	= "l.id">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvOPENVIEW_Error }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvASSIGN NAME = "l.loaded_field"	MEMBER = "id"	VALUE = "{ TGCF_Fields.d.id }">
+	<MvASSIGN NAME = "l.loaded_field"	MEMBER = "form_id"	VALUE = "{ TGCF_Fields.d.form_id }">
+	<MvASSIGN NAME = "l.loaded_field"	MEMBER = "code"	VALUE = "{ TGCF_Fields.d.code }">
+	<MvASSIGN NAME = "l.loaded_field"	MEMBER = "prompt"	VALUE = "{ TGCF_Fields.d.prompt }">
+	<MvASSIGN NAME = "l.loaded_field"	MEMBER = "type"	VALUE = "{ TGCF_Fields.d.type }">
+	<MvASSIGN NAME = "l.loaded_field"	MEMBER = "required"	VALUE = "{ TGCF_Fields.d.required }">
+
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Fields">
+	<MvFUNCTIONRETURN VALUE = "{ l.loaded_field }">
+</MvFUNCTION>
+
+<MvCOMMENT> <!-- /Field Functions --> </MvCOMMENT>
+
+<MvCOMMENT> <!-- Option Functions --> </MvCOMMENT>
+
+<MvFUNCTION NAME = "Is_Unique_Option" PARAMETERS = "field_id, code" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvOPENVIEW	NAME	= "Merchant"
+				VIEW	= "TGCF_Options"
+				QUERY	= "{ 'SELECT id FROM ' $ g.Store_Table_Prefix $ 'TGCF_Options WHERE code = ? AND field_id = ?'}"
+				FIELDS	= "l.code, l.field_id">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCF-MOD-1002:', 'An error occurred during Is_Unique_Option().' ) }">
+	</MvIF>
+
+	<MvASSIGN NAME = "l.field_id" VALUE = "{ TGCF_Options.d.id }">
+
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Options">
+
+	<MvIF EXPR = "{ l.field_id }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ 'Please Specify a unique code for your Option.' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Add_Option" PARAMETERS = "field_id, code, prompt" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.field_id" VALUE = "{ trim(l.field_id) }">
+	<MvASSIGN NAME = "l.code" VALUE = "{ trim(l.code) }">
+	<MvASSIGN NAME = "l.prompt" VALUE = "{ trim(l.prompt) }">
+
+	<MvIF EXPR = "{ ISNULL l.code }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ 'The Option code may not be blank.' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.prompt }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ 'The Option Prompt may not be blank.' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Admin ].Validate_Code( l.code ) }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT Is_Unique_Option( l.field_id, l.code ) }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+	<MvASSIGN NAME = "l.id" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Generate( 'TGCF_Options' ) }">
+
+	<MvQUERY	NAME	= "Merchant"
+				QUERY	= "{ 'INSERT INTO ' $ g.Store_Table_Prefix $ 'TGCF_Options
+							(id, field_id, code, prompt)
+							VALUES
+							(?, ?, ?, ?)' }"
+				FIELDS = "l.id, l.field_id, l.code, l.prompt">
+
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvQUERY_Error }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Delete_Option" PARAMETERS = "id" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.id" VALUE = "{ trim( l.id ) }">
+	<MvQUERY	NAME	= "Merchant"
+				QUERY	= "{ 'DELETE FROM ' $ g.Store_Table_Prefix $ 'TGCF_Options WHERE id = ?' }"
+				FIELDS	= "l.id">
+
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvQUERY_Error }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+
+<MvFUNCTION NAME = "Update_Option" PARAMETERS ="id, code, prompt" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.id" VALUE = "{ trim( l.id ) }">
+	<MvASSIGN NAME = "l.code" VALUE = "{ trim( l.code ) }">
+	<MvASSIGN NAME = "l.prompt" VALUE = "{ trim( l.prompt ) }">
+
+	<MvIF EXPR = "{ ISNULL l.id }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ 'Error: Missing Option ID.' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.prompt }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ 'Option prompt can not be blank.' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Admin ].Validate_Code( l.code ) }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvASSIGN NAME = "l.loaded_option" VALUE = "{ Load_Option( l.id ) }">
+	<MvIF EXPR = "{ l.loaded_option:code NE l.code }">
+		<MvIF EXPR = "{ NOT Is_Unique_Option( l.loaded_option:field_id, l.code ) }">
+			<MvFUNCTIONRETURN VALUE = 0>
+		</MvIF>
+	</MvIF>
+
+	<MvQUERY	NAME	= "Merchant"
+				QUERY	= "{ 'UPDATE ' $ g.Store_Table_Prefix $ 'TGCF_Options
+								SET
+									code = ?,
+									prompt = ?
+								WHERE
+									id = ?' }"
+				FIELDS	= "l.code, l.prompt, l.id">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvQUERY_Error }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Load_Option" PARAMETERS = "id" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.id" VALUE = "{ trim( l.id ) }">
+	<MvOPENVIEW	NAME	= "Merchant"
+				VIEW	= "TGCF_Options"
+				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCF_Options WHERE id = ?' }"
+				FIELDS	= "l.id">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvOPENVIEW_Error }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvASSIGN NAME = "l.loaded_option"	MEMBER = "id"	VALUE = "{ TGCF_Options.d.id }">
+	<MvASSIGN NAME = "l.loaded_option"	MEMBER = "field_id"	VALUE = "{ TGCF_Options.d.field_id }">
+	<MvASSIGN NAME = "l.loaded_option"	MEMBER = "code"	VALUE = "{ TGCF_Options.d.code }">
+	<MvASSIGN NAME = "l.loaded_option"	MEMBER = "prompt"	VALUE = "{ TGCF_Options.d.prompt }">
+
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Options">
+	<MvFUNCTIONRETURN VALUE = "{ l.loaded_option }">
+</MvFUNCTION>
+
+<MvCOMMENT> <!-- /Option Functions --> </MvCOMMENT>
+
+<MvFUNCTION NAME = "Delete_All_Field_Options" PARAMETERS = "field_id" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.field_id" VALUE = "{ trim( l.field_id ) }">
+
+	<MvOPENVIEW	NAME	= "Merchant"
+				VIEW	= "TGCF_Options"
+				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCF_Options WHERE field_id = ?' }"
+				FIELDS	= "l.field_id">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvOPENVIEW_Error }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvWHILE EXPR = "{ NOT TGCF_Options.d.EOF }">
+
+		<MvIF EXPR = "{ NOT Delete_Option( TGCF_Options.d.id ) }">
+			<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvOPENVIEW_Error }">
+			<MvFUNCTIONRETURN VALUE = 0>
+		</MvIF>
+
+		<MvSKIP NAME = "Merchant" VIEW = "TGCF_Options" ROWS = 1>
+	</MvWHILE>
+
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Options">
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Load_Field_Options" PARAMETERS = "field_id" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.id" VALUE = "{ trim( l.field_id ) }">
+	<MvOPENVIEW	NAME	= "Merchant"
+				VIEW	= "TGCF_Options"
+				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCF_Options WHERE field_id = ?' }"
+				FIELDS	= "l.field_id">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvOPENVIEW_Error }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvASSIGN NAME = "l.onum" VALUE = "1" >
+
+	<MvWHILE EXPR = "{ NOT TGCF_Options.d.EOF }">
+
+		<MvASSIGN NAME = "l.options"	INDEX = "{ l.onum }"	MEMBER = "id"			VALUE = "{ TGCF_Options.d.id }" >
+		<MvASSIGN NAME = "l.options"	INDEX = "{ l.onum }"	MEMBER = "field_id"		VALUE = "{ TGCF_Options.d.field_id }" >
+		<MvASSIGN NAME = "l.options"	INDEX = "{ l.onum }"	MEMBER = "code"			VALUE = "{ TGCF_Options.d.code }" >
+		<MvASSIGN NAME = "l.options"	INDEX = "{ l.onum }"	MEMBER = "prompt"		VALUE = "{ TGCF_Options.d.prompt }" >
+		<MvASSIGN NAME = "l.options"	INDEX = "{ l.onum }"	MEMBER = "disp_order"	VALUE = "{ TGCF_Options.d.disp_order }">
+
+		<MvASSIGN NAME = "l.onum" VALUE = "{ l.onum + 1 }">
+
+		<MvSKIP NAME = "Merchant" VIEW = "TGCF_Options" ROWS = 1>
+	</MvWHILE>
+
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Options">
+	<MvFUNCTIONRETURN VALUE = "{ l.options }">
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Data_JSON_Columns" PARAMETERS = "form_id" STANDARDOUTPUTLEVEL = "text, compresswhitespace">
+	<MvASSIGN NAME = "l.form_id" VALUE = "{ trim( l.form_id ) }">
+	<MvOPENVIEW	NAME	= "Merchant"
+				VIEW	= "TGCF_Fields"
+				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCF_Fields WHERE form_id = ?' }"
+				FIELDS	= "l.form_id">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvOPENVIEW_Error }">
+		<MvEVAL EXPR = "{ g.Validation_Message }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvASSIGN NAME = "l.dnum" VALUE = "1" >
+
+	{
+	"success": 1,
+	"data": [
+		<MvWHILE EXPR = "{ NOT TGCF_Fields.d.EOF }">
+			<MvIF EXPR = "{ l.dnum GT 1 }">,</MvIF>
+			{
+				"id": "<MvEVAL EXPR ="{ [ g.Module_JSON ].JSON_Encode( TGCF_Fields.d.id ) }">",
+				"code": "<MvEVAL EXPR ="{ [ g.Module_JSON ].JSON_Encode( TGCF_Fields.d.code ) }">",
+				"name": "<MvEVAL EXPR ="{ [ g.Module_JSON ].JSON_Encode( TGCF_Fields.d.prompt ) }">"
+			}
+			<MvASSIGN NAME = "l.dnum" VALUE = "{ l.dnum + 1 }">
+
+			<MvSKIP NAME = "Merchant" VIEW = "TGCF_Fields" ROWS = 1>
+		</MvWHILE>
+		]
+	}
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Fields">
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "JSON_Load_Forms" STANDARDOUTPUTLEVEL = "text, compresswhitespace">
+	<MvASSIGN NAME = "g.Filter" VALUE = "{ trim( g.Filter ) }">
+	<MvASSIGN NAME = "g.Sort" VALUE = "{ trim( g.Sort ) }">
+	<MvASSIGN NAME = "g.Offset" VALUE = "{ trim( g.Offset ) }">
+	<MvASSIGN NAME = "g.Count" VALUE = "{ trim( g.Count ) }">
+	<MvASSIGN NAME = "l.search_query" VALUE = "">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_SELECT( l.search_query,'s.*' ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_FROM( l.search_query, g.Store_Table_Prefix $ 'TGCF_Forms', 's' ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Filter( l.search_query, g.Filter,'id:s.id,name:s.name' ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_OrderBy_Fields(l.search_query, g.Sort, 'id:s.id,code:s.code,name:s.name', 's.id' ) }">
+
+	<MvASSIGN NAME = "l.search_sql" VALUE = "{ [ g.Module_Library_DB].SQL_Query_Build( l.search_query, l.search_fields ) }">
+
+	<MvIF EXPR = "{ NOT [ g.Module_Library_DB ].SQL_Query_Count( l.search_query, l.total_count ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Error(g.Error_Code, g.Error_Message ) }">
+	<MvELSEIF EXPR = "{ NOT [ g.Module_Library_Native_DBAPI ].DB_OPENVIEW_Range('Merchant', 'TGCF_Forms', l.search_sql, l.search_fields, g.Offset, g.Count) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Error( 'TGCF-MOD-1001',g.MvOPENVIEW_Error ) }">
+	</MvIF>
+
+	<MvASSIGN NAME = "l.count" VALUE = 0>
+
+	<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Response_Start() }">
+		{
+			"data":
+				[
+					<MvWHILE EXPR = "{ ( NOT TGCF_Forms.d.EOF ) AND ( ( g.Count EQ 0 ) OR (l.count LT g.Count ) ) }">
+					<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_Start( l.count )}">
+					"id": 		<MvEVAL EXPR = "{ int( TGCF_Forms.d.id ) }">,
+					"code" : 	"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCF_Forms.d.code ) }">",
+					"name" : 	"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCF_Forms.d.name ) }">"
+					<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_End() }">
+					<MvSKIP NAME = "Merchant" VIEW = "TGCF_Forms" ROWS = 1>
+					</MvWHILE>
+				],
+
+			"total_count": <MvEVAL EXPR = "{ int( l.total_count ) }">,
+			"start_offset": <MvEVAL EXPR = "{ int( g.Offset ) }">
+		}
+		<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Forms">
+	}
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "JSON_Load_Fields" PARAMETERS = "form_id" STANDARDOUTPUTLEVEL = "text, html, compresswhitespace">
+	<MvIF EXPR = "{ NOT [ g.Module_Admin ].CanI( 'ATMP', 1, 0, 0, 0 ) }">		<MvFUNCTIONRETURN>	</MvIF>
+
+	<MvASSIGN NAME = "g.Filter" VALUE = "{ trim( g.Filter ) }">
+	<MvASSIGN NAME = "g.Sort" VALUE = "{ trim( g.Sort ) }">
+	<MvASSIGN NAME = "g.Offset" VALUE = "{ trim( g.Offset ) }">
+	<MvASSIGN NAME = "g.Count" VALUE = "{ trim( g.Count ) }">
+	<MvASSIGN NAME = "g.form_id" VALUE = "{ trim(l.form_id) }">
+
+	<MvASSIGN NAME = "l.search_query"				VALUE = "">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_SELECT( l.search_query, 'field.id				AS field_id,
+																				 field.form_id			AS field_form_id,
+																				 field.code				AS field_code,
+																				 field.prompt			AS field_prompt,
+																				 field.type				AS field_type,
+																				 field.required			AS field_required,
+																				 field.disp_order		AS field_disp_order,
+																				 opt.id				AS opt_id,
+																				 opt.field_id		AS opt_field_id,
+																				 opt.code			AS opt_code,
+																				 opt.prompt			AS opt_prompt,
+																				 opt.disp_order		AS opt_disp_order' ) }">
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_FROM( l.search_query, g.Store_Table_Prefix $ 'TGCF_Fields', 'field' ) }">
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_LEFT_OUTER_JOIN( l.search_query, 'field', g.Store_Table_Prefix $ 'TGCF_Options', 'opt', 'opt.field_id = field.id', '' ) }">
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_WHERE( l.search_query, 'field.form_id = ?', 'g.form_id' ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Filter( l.search_query, g.Filter,'code:field.code;opt.code,prompt:field.prompt;opt.prompt,type:field.type,required:field.required' ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_OrderBy_Fields( l.search_query, g.Sort,
+																		'code:field.code;opt.code,
+																		prompt:field.prompt;opt.prompt,
+																		type:field.type,
+																		required:field.required',
+																		'field.disp_order;opt.disp_order' ) }">
+																			
+	<MvASSIGN NAME = "l.search_sql"			VALUE = "{ [ g.Module_Library_DB ].SQL_Query_Build( l.search_query, l.search_fields ) }">
+
+	<MvOPENVIEW NAME	= "Merchant"
+				VIEW	= "TGCF_Fields"
+				QUERY	= "{ l.search_sql }"
+				FIELDS	= "{ l.search_fields }">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Error( 'MER-ATT-JSN-00007', g.MvOPENVIEW_Error ) }">
+	</MvIF>
+
+	<MvASSIGN NAME = "l.total_count"		VALUE = 0>
+	<MvASSIGN NAME = "l.field_count"		VALUE = 0>
+	<MvASSIGN NAME = "l.opt_count"		VALUE = 0>
+	<MvASSIGN NAME = "l.last_field_id"	VALUE = 0>
+	<MvASSIGN NAME = "l.last_opt_id"	VALUE = 0>
+
+	<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Response_Start() }">
+	{
+		"data":
+		[
+		<MvWHILE EXPR = "{ NOT TGCF_Fields.d.EOF }">
+			<MvIF EXPR = "{ l.last_field_id NE TGCF_Fields.d.field_id }">
+				<MvIF EXPR = "{ l.opt_count }">
+					<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_End() }">
+					]
+				</MvIF>
+
+				<MvIF EXPR = "{ l.field_count }">
+					<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_End() }">
+				</MvIF>
+
+				<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_Start( l.field_count ) }">
+				"id":			<MvEVAL EXPR = "{ int( TGCF_Fields.d.field_id ) }">,
+				"form_id":		<MvEVAL EXPR = "{ int( TGCF_Fields.d.field_form_id ) }">,
+				"code":			"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCF_Fields.d.field_code ) }">",
+				"disp_order":	<MvEVAL EXPR = "{ int( TGCF_Fields.d.field_disp_order ) }">,
+				"prompt":		"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCF_Fields.d.field_prompt ) }">",
+				"type":			"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCF_Fields.d.field_type ) }">",
+				"required":		<MvEVAL EXPR = "{ int( TGCF_Fields.d.field_required ) }">
+				
+				<MvASSIGN NAME = "l.total_count"		VALUE = "{ l.total_count + 1 }">
+				<MvASSIGN NAME = "l.last_field_id"	VALUE = "{ TGCF_Fields.d.field_id }">
+				<MvASSIGN NAME = "l.last_opt_id"	VALUE = 0>
+				<MvASSIGN NAME = "l.opt_count"		VALUE = 0>
+			</MvIF>
+
+			<MvIF EXPR = "{ l.last_opt_id NE TGCF_Fields.d.opt_id AND NOT ISNULL TGCF_Fields.d.opt_id }">
+				<MvIF EXPR = "{ l.opt_count }">
+					<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_End() }">
+				</MvIF>
+
+				<MvIF EXPR = "{ NOT l.opt_count }">
+					, "options":
+					[
+				</MvIF>
+
+				<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_Start( l.opt_count ) }">
+				"id":			<MvEVAL EXPR = "{ int( TGCF_Fields.d.opt_id ) }">,
+				"field_id":		<MvEVAL EXPR = "{ int( TGCF_Fields.d.opt_field_id ) }">,
+				"disp_order":	<MvEVAL EXPR = "{ int( TGCF_Fields.d.opt_disp_order ) }">,
+				"code":			"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCF_Fields.d.opt_code ) }">",
+				"prompt":		"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCF_Fields.d.opt_prompt ) }">"
+
+				<MvASSIGN NAME = "l.total_count"		VALUE = "{ l.total_count + 1 }">
+				<MvASSIGN NAME = "l.last_opt_id"	VALUE = "{ TGCF_Fields.d.opt_id }">
+			</MvIF>
+
+			<MvSKIP NAME = "Merchant" VIEW = "TGCF_Fields" ROWS = 1>
+		</MvWHILE>
+
+		<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Fields">
+
+		<MvIF EXPR = "{ l.opt_count }">
+			<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_End() }">
+			]
+		</MvIF>
+
+		<MvIF EXPR = "{ l.field_count }">
+			<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_End() }">
+		</MvIF>
+		],
+		"start_offset": 0,
+		"total_count": <MvEVAL EXPR = "{ int( l.total_count ) }">
+	}
+}
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "JSON_Form_Data_Load_Query" PARAMETERS = "form_id" STANDARDOUTPUTLEVEL = "text, html, compresswhitespace">
+	<MvASSIGN NAME = "g.Filter" VALUE = "{ trim( g.Filter ) }">
+	<MvASSIGN NAME = "g.Sort" VALUE = "{ trim( g.Sort ) }">
+	<MvASSIGN NAME = "g.Offset" VALUE = "{ trim( g.Offset ) }">
+	<MvASSIGN NAME = "g.Count" VALUE = "{ trim( g.Count ) }">
+	<MvASSIGN NAME = "g.form_id" VALUE = "{ trim( l.form_id ) }">
+	<MvASSIGN NAME = "l.search_query" VALUE = "">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_SELECT( l.search_query,'s.*' ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_FROM( l.search_query, g.Store_Table_Prefix $ 'TGCF_Data', 's' ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_WHERE( l.search_query, 's.form_id = ?', 'g.form_id' ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_GROUP_BY( l.search_query, 's.group_id' ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Filter( l.search_query, g.Filter,'id:s.id,value:s.value' ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_OrderBy_Fields(l.search_query, g.Sort, 'id:s.id,value:s.value', 's.id' ) }">
+
+	<MvASSIGN NAME = "l.search_sql" VALUE = "{ [ g.Module_Library_DB].SQL_Query_Build( l.search_query, l.search_fields ) }">
+
+	<MvIF EXPR = "{ NOT [ g.Module_Library_DB ].SQL_Query_Count( l.search_query, l.total_count ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Error(g.Error_Code, g.Error_Message ) }">
+	<MvELSEIF EXPR = "{ NOT [ g.Module_Library_Native_DBAPI ].DB_OPENVIEW_Range('Merchant', 'TGCF_Data', l.search_sql, l.search_fields, g.Offset, g.Count) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Error( 'TGCF-MOD-1001',g.MvOPENVIEW_Error ) }">
+	</MvIF>
+
+	<MvASSIGN NAME = "l.count" VALUE = 0>
+
+	<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Response_Start() }">
+		{
+			"data":
+				[
+					<MvWHILE EXPR = "{ ( NOT TGCF_Data.d.EOF ) AND ( ( g.Count EQ 0 ) OR (l.count LT g.Count ) ) }">
+					<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_Start( l.count )}">
+					"id": 		<MvEVAL EXPR = "{ int( TGCF_Data.d.id ) }">
+					<MvEVAL EXPR = "{ JSON_Form_Data_Fields( TGCF_Data.d.group_id ) }">
+					<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_End() }">
+					<MvSKIP NAME = "Merchant" VIEW = "TGCF_Data" ROWS = 1>
+					<MvASSIGN NAME = "l.real_total_count" VALUE = "{ l.real_total_count + 1 }">
+					</MvWHILE>
+				],
+
+			"total_count": <MvEVAL EXPR = "{ int( l.real_total_count ) }">,
+			"start_offset": <MvEVAL EXPR = "{ int( g.Offset ) }">
+		}
+		<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Data">
+	}
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "JSON_Form_Data_Fields" PARAMETERS = "group_id" STANDARDOUTPUTLEVEL = "text, html, compresswhitespace">
+	<MvASSIGN NAME = "l.group_id" VALUE = "{ trim( l.group_id ) }">
+
+	<MvOPENVIEW	NAME	= "Merchant"
+				VIEW	= "TGCF_Data_Load"
+				QUERY	= "{ 'SELECT
+								d.group_id, d.id, d.form_id, f.code, d.value
+							FROM
+								' $ g.Store_Table_Prefix $ 'TGCF_Data as d
+							LEFT JOIN
+								' $ g.Store_Table_Prefix $ 'TGCF_Fields as f
+							ON
+								d.field_id = f.id
+							WHERE group_id = ?' }"
+				FIELDS	= "l.group_id">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvOPENVIEW_Error }">
+		<MvEVAL EXPR = "{ g.Validation_Message }">
+		<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Data_Load">
+	</MvIF>
+
+	<MvWHILE EXPR = "{ NOT TGCF_Data_Load.d.EOF }">
+		,
+		"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCF_Data_Load.d.code ) }">" : "<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCF_Data_Load.d.value ) }">"
+		<MvSKIP NAME = "Merchant" VIEW = "TGCF_Data_Load" ROWS = 1>
+	</MvWHILE>
+
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Data_Load">
+</MvFUNCTION>
