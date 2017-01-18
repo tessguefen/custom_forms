@@ -1,4 +1,5 @@
 function Forms_List_Load_Query( filter, sort, offset, count, callback, delegator ) {
+	console.log(filter);
 	return AJAX_Call_Module(	callback,
 								'admin',
 								'TGCF',

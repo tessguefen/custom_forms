@@ -1208,11 +1208,38 @@ JSON_Form_Data_Load_Query( form_id )
 
 	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_GROUP_BY( l.search_query, 's.group_id' ) }">
 
-	<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Filter( l.search_query, g.Filter,'id:s.id,value:s.value' ) }">
+	<MvEVAL EXPR = "{ JSON_Field_Filter( l.search_query, g.Filter ) }">
 
 	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_OrderBy_Fields(l.search_query, g.Sort, 'id:s.id,value:s.value', 's.id' ) }">
 
 	<MvASSIGN NAME = "l.search_sql" VALUE = "{ [ g.Module_Library_DB].SQL_Query_Build( l.search_query, l.search_fields ) }">
+
+	<MvCOMMENT>
+		# qhat.
+		SELECT s.* FROM s01_TGCF_Data s WHERE s.form_id = ? AND ( s.value LIKE ? AND s.field_id = ? ) OR ( s.value LIKE ? AND s.field_id = ? ) OR ( s.value LIKE ? AND s.field_id = ? ) GROUP BY s.group_id ORDER BY s.id DESC
+		:from[1]:alias=s
+		:from[1]:name=s01_TGCF_Data
+		:from_count=1
+		:groupby[1]=s.group_id
+		:groupby_count=1
+		:orderby[1]:column=s.id
+		:orderby[1]:direction=DESC
+		:orderby_count=1
+		:select[1]=s.*
+		:select_count=1
+		:where[1]:sql=s.form_id+%3D+%3F
+		:where[2]:sql=%28+s.value+LIKE+%3F+AND+s.field_id+%3D+%3F+%29+OR+%28+s.value+LIKE+%3F+AND+s.field_id+%3D+%3F+%29+OR+%28+s.value+LIKE+%3F+AND+s.field_id+%3D+%3F+%29
+		:where_count=2
+		:where_field_count=2
+		:where_fields[1]=g.form_id
+		:where_fields[2][1]=%25aa%25
+		:where_fields[2][2]=1
+		:where_fields[2][3]=%25aa%25
+		:where_fields[2][4]=2
+		:where_fields[2][5]=%25aa%25
+		:where_fields[2][6]=3
+
+	</MvCOMMENT>
 
 	<MvIF EXPR = "{ NOT [ g.Module_Library_DB ].SQL_Query_Count( l.search_query, l.total_count ) }">
 		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Error(g.Error_Code, g.Error_Message ) }">
@@ -1267,4 +1294,48 @@ JSON_Form_Data_Load_Query( form_id )
 	</MvWHILE>
 
 	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Data_Load">
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "JSON_Field_Filter" PARAMETERS = "query var, filterlist" STANDARDOUTPUTLEVEL = "text, html, compresswhitespace">
+	<MvFOREACH ITERATOR = "l.filter" ARRAY = "l.filters" COUNT = "{ [ g.Module_JSON ].JSON_Array_String( l.filterlist, l.filters ) }">
+		<MvASSIGN NAME = "l.filter_name"				VALUE = "{ trim( decodeattribute( gettoken( l.filter, ':', 1 ) ) ) }">
+		<MvASSIGN NAME = "l.filter_value"				VALUE = "{ trim( decodeattribute( gettoken( l.filter, ':', 2 ) ) ) }">
+		
+		<MvIF EXPR = "{ l.filter_name EQ 'search' }">
+			<MvFOREACH ITERATOR = "l.search" ARRAY = "l.searchlist" COUNT = "{ [ g.Module_JSON ].JSON_Array_String( l.filter_value, l.searchlist ) }">
+				<MvASSIGN NAME = "l.search_name"		VALUE = "{ trim( decodeattribute( gettoken( l.search, ':', 1 ) ) ) }">
+				<MvASSIGN NAME = "l.search_name"		VALUE = "{ glosub( l.search_name, 'Field[', '') }">
+				<MvASSIGN NAME = "l.search_name"		VALUE = "{ glosub( l.search_name, ']', '') }">
+				<MvASSIGN NAME = "l.search_operator"	VALUE = "{ trim( decodeattribute( gettoken( l.search, ':', 2 ) ) ) }">
+				<MvASSIGN NAME = "l.search_value"		VALUE = "{ trim( decodeattribute( gettoken( l.search, ':', 3 ) ) ) }">
+				
+				<MvIF EXPR = "{ l.search_name AND l.search_value }">
+					<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( l.fields, '%' $ l.search_value $ '%', -1 ) }">
+					<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( l.fields, l.search_name, -1 ) }">
+					<MvCOMMENT>
+						# Works
+						<MvIF EXPR = "{ l.where }">
+							<MvASSIGN NAME = "l.where" VALUE = "{ l.where $ ' OR ' $ '( s.value LIKE \'%' $ l.search_value $ '%\' AND s.field_id = ' $ l.search_name $ ' )' }">
+						<MvELSE>
+							<MvASSIGN NAME = "l.where" VALUE = "{ '( s.value LIKE \'%' $ l.search_value $ '%\' AND s.field_id = ' $ l.search_name $ ' )' }">
+						</MvIF>
+					</MvCOMMENT>
+
+					<MvCOMMENT>
+						# Doesn't work ?
+					</MvCOMMENT>
+
+					<MvIF EXPR = "{ l.where }">
+						<MvASSIGN NAME = "l.where" VALUE = "{ l.where $ ' OR ' $ '( s.value LIKE ? AND s.field_id = ? )' }">
+					<MvELSE>
+						<MvASSIGN NAME = "l.where" VALUE = "{ '( s.value LIKE ? AND s.field_id = ? )' }">
+					</MvIF>
+				</MvIF>
+				
+			</MvFOREACH>
+		</MvIF>
+	</MvFOREACH>
+	<MvIF EXPR = "{ l.where }">
+		<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_WHERE( l.query, l.where, l.fields ) }">
+	</MvIF>
 </MvFUNCTION>
