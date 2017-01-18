@@ -1300,7 +1300,9 @@ JSON_Form_Data_Load_Query( form_id )
 	<MvFOREACH ITERATOR = "l.filter" ARRAY = "l.filters" COUNT = "{ [ g.Module_JSON ].JSON_Array_String( l.filterlist, l.filters ) }">
 		<MvASSIGN NAME = "l.filter_name"				VALUE = "{ trim( decodeattribute( gettoken( l.filter, ':', 1 ) ) ) }">
 		<MvASSIGN NAME = "l.filter_value"				VALUE = "{ trim( decodeattribute( gettoken( l.filter, ':', 2 ) ) ) }">
-		
+		<MvASSIGN NAME = "l.where" VALUE = "">
+		<MvASSIGN NAME = "l.fields" VALUE = "">
+
 		<MvIF EXPR = "{ l.filter_name EQ 'search' }">
 			<MvFOREACH ITERATOR = "l.search" ARRAY = "l.searchlist" COUNT = "{ [ g.Module_JSON ].JSON_Array_String( l.filter_value, l.searchlist ) }">
 				<MvASSIGN NAME = "l.search_name"		VALUE = "{ trim( decodeattribute( gettoken( l.search, ':', 1 ) ) ) }">
@@ -1310,20 +1312,13 @@ JSON_Form_Data_Load_Query( form_id )
 				<MvASSIGN NAME = "l.search_value"		VALUE = "{ trim( decodeattribute( gettoken( l.search, ':', 3 ) ) ) }">
 				
 				<MvIF EXPR = "{ l.search_name AND l.search_value }">
-					<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( l.fields, '%' $ l.search_value $ '%', -1 ) }">
-					<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( l.fields, l.search_name, -1 ) }">
-					<MvCOMMENT>
-						# Works
-						<MvIF EXPR = "{ l.where }">
-							<MvASSIGN NAME = "l.where" VALUE = "{ l.where $ ' OR ' $ '( s.value LIKE \'%' $ l.search_value $ '%\' AND s.field_id = ' $ l.search_name $ ' )' }">
-						<MvELSE>
-							<MvASSIGN NAME = "l.where" VALUE = "{ '( s.value LIKE \'%' $ l.search_value $ '%\' AND s.field_id = ' $ l.search_name $ ' )' }">
-						</MvIF>
-					</MvCOMMENT>
+					<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( g.Fields, '%' $ l.search_value $ '%', -1 ) }">
+					<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( g.Fields, l.search_name, -1 ) }">
 
-					<MvCOMMENT>
-						# Doesn't work ?
-					</MvCOMMENT>
+					<MvASSIGN NAME = "l.counter" VALUE = "{ l.counter + 1 }">
+					<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( l.fields, 'g.Fields[' $ l.counter $ ']', -1 ) }">
+					<MvASSIGN NAME = "l.counter" VALUE = "{ l.counter + 1 }">
+					<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( l.fields, 'g.Fields[' $ l.counter $ ']', -1 ) }">
 
 					<MvIF EXPR = "{ l.where }">
 						<MvASSIGN NAME = "l.where" VALUE = "{ l.where $ ' OR ' $ '( s.value LIKE ? AND s.field_id = ? )' }">
@@ -1334,8 +1329,8 @@ JSON_Form_Data_Load_Query( form_id )
 				
 			</MvFOREACH>
 		</MvIF>
+		<MvIF EXPR = "{ l.where }">
+			<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_WHERE( l.query, l.where, l.fields ) }">
+		</MvIF>
 	</MvFOREACH>
-	<MvIF EXPR = "{ l.where }">
-		<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_WHERE( l.query, l.where, l.fields ) }">
-	</MvIF>
 </MvFUNCTION>
