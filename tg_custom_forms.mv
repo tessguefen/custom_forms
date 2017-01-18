@@ -1009,9 +1009,10 @@ JSON_Form_Data_Load_Query( form_id )
 		<MvWHILE EXPR = "{ NOT TGCF_Fields.d.EOF }">
 			<MvIF EXPR = "{ l.dnum GT 1 }">,</MvIF>
 			{
-				"id": "<MvEVAL EXPR ="{ [ g.Module_JSON ].JSON_Encode( TGCF_Fields.d.id ) }">",
+				"id": "<MvEVAL EXPR ="{ int( TGCF_Fields.d.id ) }">",
 				"code": "<MvEVAL EXPR ="{ [ g.Module_JSON ].JSON_Encode( TGCF_Fields.d.code ) }">",
-				"name": "<MvEVAL EXPR ="{ [ g.Module_JSON ].JSON_Encode( TGCF_Fields.d.prompt ) }">"
+				"name": "<MvEVAL EXPR ="{ [ g.Module_JSON ].JSON_Encode( TGCF_Fields.d.prompt ) }">",
+				"field_name" : "Field[<MvEVAL EXPR = "{ int( TGCF_Fields.d.id ) }">]"
 			}
 			<MvASSIGN NAME = "l.dnum" VALUE = "{ l.dnum + 1 }">
 
@@ -1248,13 +1249,9 @@ JSON_Form_Data_Load_Query( form_id )
 	<MvOPENVIEW	NAME	= "Merchant"
 				VIEW	= "TGCF_Data_Load"
 				QUERY	= "{ 'SELECT
-								d.group_id, d.id, d.form_id, f.code, d.value
+								*
 							FROM
-								' $ g.Store_Table_Prefix $ 'TGCF_Data as d
-							LEFT JOIN
-								' $ g.Store_Table_Prefix $ 'TGCF_Fields as f
-							ON
-								d.field_id = f.id
+								' $ g.Store_Table_Prefix $ 'TGCF_Data
 							WHERE group_id = ?' }"
 				FIELDS	= "l.group_id">
 	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
@@ -1265,7 +1262,7 @@ JSON_Form_Data_Load_Query( form_id )
 
 	<MvWHILE EXPR = "{ NOT TGCF_Data_Load.d.EOF }">
 		,
-		"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCF_Data_Load.d.code ) }">" : "<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCF_Data_Load.d.value ) }">"
+		"Field[<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCF_Data_Load.d.field_id ) }">]" : "<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCF_Data_Load.d.value ) }">"
 		<MvSKIP NAME = "Merchant" VIEW = "TGCF_Data_Load" ROWS = 1>
 	</MvWHILE>
 
