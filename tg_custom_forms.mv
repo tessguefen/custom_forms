@@ -1310,9 +1310,15 @@ JSON_Form_Data_Load_Query( form_id )
 				<MvASSIGN NAME = "l.search_name"		VALUE = "{ glosub( l.search_name, ']', '') }">
 				<MvASSIGN NAME = "l.search_operator"	VALUE = "{ trim( decodeattribute( gettoken( l.search, ':', 2 ) ) ) }">
 				<MvASSIGN NAME = "l.search_value"		VALUE = "{ trim( decodeattribute( gettoken( l.search, ':', 3 ) ) ) }">
+				<MvASSIGN NAME = "l.sql_operator"		VALUE = "">
 				
 				<MvIF EXPR = "{ l.search_name AND l.search_value }">
-					<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( g.Fields, '%' $ l.search_value $ '%', -1 ) }">
+					<MvIF EXPR = "{ l.search_operator EQ 'CO' OR l.search_operator EQ 'NC' }">
+						<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( g.Fields, '%' $ l.search_value $ '%', -1 ) }">
+					<MvELSE>
+						<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( g.Fields, l.search_value, -1 ) }">
+					</MvIF>
+
 					<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( g.Fields, l.search_name, -1 ) }">
 
 					<MvASSIGN NAME = "l.counter" VALUE = "{ l.counter + 1 }">
@@ -1320,10 +1326,24 @@ JSON_Form_Data_Load_Query( form_id )
 					<MvASSIGN NAME = "l.counter" VALUE = "{ l.counter + 1 }">
 					<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( l.fields, 'g.Fields[' $ l.counter $ ']', -1 ) }">
 
-					<MvIF EXPR = "{ l.where }">
-						<MvASSIGN NAME = "l.where" VALUE = "{ l.where $ ' OR ' $ '( s.value LIKE ? AND s.field_id = ? )' }">
-					<MvELSE>
-						<MvASSIGN NAME = "l.where" VALUE = "{ '( s.value LIKE ? AND s.field_id = ? )' }">
+					<MvIF EXPR = "{ l.search_operator EQ 'EQ' }">			<MvASSIGN NAME = "l.sql_operator" VALUE = "{ '=' }">
+					<MvELSEIF EXPR = "{ l.search_operator EQ 'GT' }">		<MvASSIGN NAME = "l.sql_operator" VALUE = "{ '>' }">
+					<MvELSEIF EXPR = "{ l.search_operator EQ 'GE' }">		<MvASSIGN NAME = "l.sql_operator" VALUE = "{ '>=' }">
+					<MvELSEIF EXPR = "{ l.search_operator EQ 'LT' }">		<MvASSIGN NAME = "l.sql_operator" VALUE = "{ '<' }">
+					<MvELSEIF EXPR = "{ l.search_operator EQ 'LE' }">		<MvASSIGN NAME = "l.sql_operator" VALUE = "{ '<=' }">
+					<MvELSEIF EXPR = "{ l.search_operator EQ 'CO' }">		<MvASSIGN NAME = "l.sql_operator" VALUE = "{ 'LIKE' }">
+					<MvELSEIF EXPR = "{ l.search_operator EQ 'NC' }">		<MvASSIGN NAME = "l.sql_operator" VALUE = "{ 'NOT LIKE'}">
+					<MvELSEIF EXPR = "{ l.search_operator EQ 'LIKE' }">		<MvASSIGN NAME = "l.sql_operator" VALUE = "{ 'LIKE' }">
+					<MvELSEIF EXPR = "{ l.search_operator EQ 'NOTLIKE' }">	<MvASSIGN NAME = "l.sql_operator" VALUE = "{ 'NOT LIKE'}">
+					<MvELSEIF EXPR = "{ l.search_operator EQ 'NE' }">		<MvASSIGN NAME = "l.sql_operator" VALUE = "{ '<>' }">
+					</MvIF>
+					
+					<MvIF EXPR = "{ l.sql_operator }">
+						<MvIF EXPR = "{ l.where }">
+							<MvASSIGN NAME = "l.where" VALUE = "{ l.where $ ' OR ' $ '( s.value ' $ l.sql_operator $ ' ' $ [ g.Module_Library_Native_DBAPI ].DB_Compare_UPPER( '?' ) $ ' AND s.field_id = ? )' }">
+						<MvELSE>
+							<MvASSIGN NAME = "l.where" VALUE = "{ '( s.value ' $ l.sql_operator $ ' ? AND s.field_id = ? )' }">
+						</MvIF>
 					</MvIF>
 				</MvIF>
 				
