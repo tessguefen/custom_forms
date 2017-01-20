@@ -1,8 +1,5 @@
 function Data_Batchlist() {
 	var self = this;
-	this.Feature_SearchBar_SetPlaceholderText( 'Search Data...' );
-	this.SetDefaultSort( 'id', '' );
-	//this.Feature_Delete_Enable('Delete Data');
 
 	Load_Data_JSON_Columns( function( response )
 	{
@@ -10,6 +7,10 @@ function Data_Batchlist() {
 		{
 			self.formFields = response.data;
 			MMBatchList.call( self, 'Data_Batchlist_id' );
+			self.Feature_SearchBar_SetPlaceholderText( 'Search Data...' );
+			self.SetDefaultSort( 'id', '' );
+			self.Feature_Add_Enable('Add Data');
+			//this.Feature_Delete_Enable('Delete Data');
 		}
 	} );
 }
@@ -32,10 +33,27 @@ Data_Batchlist.prototype.onCreateRootColumnList = function() {
 	];
 
 	for ( i = 0, i_len = self.formFields.length; i < i_len; i++ ) {
-		columnlist.push( new MMBatchList_Column_Text( self.formFields[ i ].name, self.formFields[ i ].field_name, self.formFields[ i ].field_name ) );
+		if (self.formFields[ i ].type == 'checkbox') {
+			columnlist.push( new MMBatchList_Column_Checkbox( self.formFields[ i ].name, self.formFields[ i ].field_name, self.formFields[ i ].field_name ) );
+		} else {
+			columnlist.push( new MMBatchList_Column_Text( self.formFields[ i ].name, self.formFields[ i ].field_name, self.formFields[ i ].field_name ) );
+		}
 	}
-
-	console.log(columnlist);
 	
 	return columnlist;
+}
+
+Data_Batchlist.prototype.onCreate = function() {
+	var record;
+	record = new Object();
+	record.id = 0;
+	for ( i = 0, i_len = this.formFields.length; i < i_len; i++ ) {
+		var code = this.formFields[ i ].field_name;
+		record[ code ] = '';
+	}
+	return record;
+}
+// On Create
+Data_Batchlist.prototype.onInsert = function( item, callback, delegator ) {
+	Data_Batchlist_Insert( item.record.mmbatchlist_fieldlist, callback, delegator );
 }

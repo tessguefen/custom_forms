@@ -14,3 +14,12 @@ function Load_Data_JSON_Columns( callback, delegator ) {
 								'&Form_ID=' + Form_ID,
 								delegator );
 }
+function Data_Batchlist_Insert( fieldlist, callback, delegator ) {
+	return AJAX_Call_Module_FieldList( callback,
+										'admin',
+										'TGCF',
+										'Data_Batchlist_Insert',
+										'&Form_ID=' + Form_ID,
+										fieldlist,
+										delegator );
+}
