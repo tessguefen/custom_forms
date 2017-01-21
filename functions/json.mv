@@ -1,0 +1,476 @@
+<MvFUNCTION NAME = "Load_Field_Options" PARAMETERS = "field_id" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.id" VALUE = "{ trim( l.field_id ) }">
+	<MvOPENVIEW	NAME	= "Merchant"
+				VIEW	= "TGCF_Options"
+				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCF_Options WHERE field_id = ?' }"
+				FIELDS	= "l.field_id">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvOPENVIEW_Error }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvASSIGN NAME = "l.onum" VALUE = "1" >
+
+	<MvWHILE EXPR = "{ NOT TGCF_Options.d.EOF }">
+
+		<MvASSIGN NAME = "l.options"	INDEX = "{ l.onum }"	MEMBER = "id"			VALUE = "{ TGCF_Options.d.id }" >
+		<MvASSIGN NAME = "l.options"	INDEX = "{ l.onum }"	MEMBER = "field_id"		VALUE = "{ TGCF_Options.d.field_id }" >
+		<MvASSIGN NAME = "l.options"	INDEX = "{ l.onum }"	MEMBER = "code"			VALUE = "{ TGCF_Options.d.code }" >
+		<MvASSIGN NAME = "l.options"	INDEX = "{ l.onum }"	MEMBER = "prompt"		VALUE = "{ TGCF_Options.d.prompt }" >
+		<MvASSIGN NAME = "l.options"	INDEX = "{ l.onum }"	MEMBER = "disp_order"	VALUE = "{ TGCF_Options.d.disp_order }">
+
+		<MvASSIGN NAME = "l.onum" VALUE = "{ l.onum + 1 }">
+
+		<MvSKIP NAME = "Merchant" VIEW = "TGCF_Options" ROWS = 1>
+	</MvWHILE>
+
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Options">
+	<MvFUNCTIONRETURN VALUE = "{ l.options }">
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Data_JSON_Columns" PARAMETERS = "form_id" STANDARDOUTPUTLEVEL = "text, compresswhitespace">
+	<MvASSIGN NAME = "l.form_id" VALUE = "{ trim( l.form_id ) }">
+	<MvOPENVIEW	NAME	= "Merchant"
+				VIEW	= "TGCF_Fields"
+				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCF_Fields WHERE form_id = ?' }"
+				FIELDS	= "l.form_id">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvOPENVIEW_Error }">
+		<MvEVAL EXPR = "{ g.Validation_Message }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvASSIGN NAME = "l.dnum" VALUE = "1" >
+
+	{
+	"success": 1,
+	"data": [
+		<MvWHILE EXPR = "{ NOT TGCF_Fields.d.EOF }">
+			<MvIF EXPR = "{ l.dnum GT 1 }">,</MvIF>
+			{
+				"id": "<MvEVAL EXPR ="{ int( TGCF_Fields.d.id ) }">",
+				"code": "<MvEVAL EXPR ="{ [ g.Module_JSON ].JSON_Encode( TGCF_Fields.d.code ) }">",
+				"name": "<MvEVAL EXPR ="{ [ g.Module_JSON ].JSON_Encode( TGCF_Fields.d.prompt ) }">",
+				"type": "<MvEVAL EXPR ="{ [ g.Module_JSON ].JSON_Encode( TGCF_Fields.d.type ) }">",
+				"field_name" : "Field_<MvEVAL EXPR = "{ int( TGCF_Fields.d.id ) }">"
+			}
+			<MvASSIGN NAME = "l.dnum" VALUE = "{ l.dnum + 1 }">
+
+			<MvSKIP NAME = "Merchant" VIEW = "TGCF_Fields" ROWS = 1>
+		</MvWHILE>
+		]
+	}
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Fields">
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "JSON_Load_Forms" STANDARDOUTPUTLEVEL = "text, compresswhitespace">
+	<MvASSIGN NAME = "g.Filter" VALUE = "{ trim( g.Filter ) }">
+	<MvASSIGN NAME = "g.Sort" VALUE = "{ trim( g.Sort ) }">
+	<MvASSIGN NAME = "g.Offset" VALUE = "{ trim( g.Offset ) }">
+	<MvASSIGN NAME = "g.Count" VALUE = "{ trim( g.Count ) }">
+	<MvASSIGN NAME = "l.search_query" VALUE = "">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_SELECT( l.search_query,'s.*' ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_FROM( l.search_query, g.Store_Table_Prefix $ 'TGCF_Forms', 's' ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Filter( l.search_query, g.Filter,'id:s.id,name:s.name' ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_OrderBy_Fields(l.search_query, g.Sort, 'id:s.id,code:s.code,name:s.name', 's.id' ) }">
+
+	<MvASSIGN NAME = "l.search_sql" VALUE = "{ [ g.Module_Library_DB].SQL_Query_Build( l.search_query, l.search_fields ) }">
+
+	<MvIF EXPR = "{ NOT [ g.Module_Library_DB ].SQL_Query_Count( l.search_query, l.total_count ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Error(g.Error_Code, g.Error_Message ) }">
+	<MvELSEIF EXPR = "{ NOT [ g.Module_Library_Native_DBAPI ].DB_OPENVIEW_Range('Merchant', 'TGCF_Forms', l.search_sql, l.search_fields, g.Offset, g.Count) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Error( 'TGCF-MOD-1001',g.MvOPENVIEW_Error ) }">
+	</MvIF>
+
+	<MvASSIGN NAME = "l.count" VALUE = 0>
+
+	<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Response_Start() }">
+		{
+			"data":
+				[
+					<MvWHILE EXPR = "{ ( NOT TGCF_Forms.d.EOF ) AND ( ( g.Count EQ 0 ) OR (l.count LT g.Count ) ) }">
+					<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_Start( l.count )}">
+					"id": 		<MvEVAL EXPR = "{ int( TGCF_Forms.d.id ) }">,
+					"code" : 	"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCF_Forms.d.code ) }">",
+					"name" : 	"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCF_Forms.d.name ) }">"
+					<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_End() }">
+					<MvSKIP NAME = "Merchant" VIEW = "TGCF_Forms" ROWS = 1>
+					</MvWHILE>
+				],
+
+			"total_count": <MvEVAL EXPR = "{ int( l.total_count ) }">,
+			"start_offset": <MvEVAL EXPR = "{ int( g.Offset ) }">
+		}
+		<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Forms">
+	}
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "JSON_Load_Fields" PARAMETERS = "form_id" STANDARDOUTPUTLEVEL = "text, html, compresswhitespace">
+	<MvIF EXPR = "{ NOT [ g.Module_Admin ].CanI( 'ATMP', 1, 0, 0, 0 ) }">		<MvFUNCTIONRETURN>	</MvIF>
+
+	<MvASSIGN NAME = "g.Filter" VALUE = "{ trim( g.Filter ) }">
+	<MvASSIGN NAME = "g.Sort" VALUE = "{ trim( g.Sort ) }">
+	<MvASSIGN NAME = "g.Offset" VALUE = "{ trim( g.Offset ) }">
+	<MvASSIGN NAME = "g.Count" VALUE = "{ trim( g.Count ) }">
+	<MvASSIGN NAME = "g.form_id" VALUE = "{ trim(l.form_id) }">
+
+	<MvASSIGN NAME = "l.search_query"				VALUE = "">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_SELECT( l.search_query, 'field.id				AS field_id,
+																				 field.form_id			AS field_form_id,
+																				 field.code				AS field_code,
+																				 field.prompt			AS field_prompt,
+																				 field.type				AS field_type,
+																				 field.required			AS field_required,
+																				 field.disp_order		AS field_disp_order,
+																				 opt.id				AS opt_id,
+																				 opt.field_id		AS opt_field_id,
+																				 opt.code			AS opt_code,
+																				 opt.prompt			AS opt_prompt,
+																				 opt.disp_order		AS opt_disp_order' ) }">
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_FROM( l.search_query, g.Store_Table_Prefix $ 'TGCF_Fields', 'field' ) }">
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_LEFT_OUTER_JOIN( l.search_query, 'field', g.Store_Table_Prefix $ 'TGCF_Options', 'opt', 'opt.field_id = field.id', '' ) }">
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_WHERE( l.search_query, 'field.form_id = ?', 'g.form_id' ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Filter( l.search_query, g.Filter,'code:field.code;opt.code,prompt:field.prompt;opt.prompt,type:field.type,required:field.required' ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_OrderBy_Fields( l.search_query, g.Sort,
+																		'code:field.code;opt.code,
+																		prompt:field.prompt;opt.prompt,
+																		type:field.type,
+																		required:field.required',
+																		'field.disp_order;opt.disp_order' ) }">
+																			
+	<MvASSIGN NAME = "l.search_sql"			VALUE = "{ [ g.Module_Library_DB ].SQL_Query_Build( l.search_query, l.search_fields ) }">
+
+	<MvOPENVIEW NAME	= "Merchant"
+				VIEW	= "TGCF_Fields"
+				QUERY	= "{ l.search_sql }"
+				FIELDS	= "{ l.search_fields }">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Error( 'MER-ATT-JSN-00007', g.MvOPENVIEW_Error ) }">
+	</MvIF>
+
+	<MvASSIGN NAME = "l.total_count"		VALUE = 0>
+	<MvASSIGN NAME = "l.field_count"		VALUE = 0>
+	<MvASSIGN NAME = "l.opt_count"		VALUE = 0>
+	<MvASSIGN NAME = "l.last_field_id"	VALUE = 0>
+	<MvASSIGN NAME = "l.last_opt_id"	VALUE = 0>
+
+	<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Response_Start() }">
+	{
+		"data":
+		[
+		<MvWHILE EXPR = "{ NOT TGCF_Fields.d.EOF }">
+			<MvIF EXPR = "{ l.last_field_id NE TGCF_Fields.d.field_id }">
+				<MvIF EXPR = "{ l.opt_count }">
+					<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_End() }">
+					]
+				</MvIF>
+
+				<MvIF EXPR = "{ l.field_count }">
+					<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_End() }">
+				</MvIF>
+
+				<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_Start( l.field_count ) }">
+				"id":			<MvEVAL EXPR = "{ int( TGCF_Fields.d.field_id ) }">,
+				"form_id":		<MvEVAL EXPR = "{ int( TGCF_Fields.d.field_form_id ) }">,
+				"code":			"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCF_Fields.d.field_code ) }">",
+				"disp_order":	<MvEVAL EXPR = "{ int( TGCF_Fields.d.field_disp_order ) }">,
+				"prompt":		"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCF_Fields.d.field_prompt ) }">",
+				"type":			"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCF_Fields.d.field_type ) }">",
+				"required":		<MvEVAL EXPR = "{ int( TGCF_Fields.d.field_required ) }">
+				
+				<MvASSIGN NAME = "l.total_count"		VALUE = "{ l.total_count + 1 }">
+				<MvASSIGN NAME = "l.last_field_id"	VALUE = "{ TGCF_Fields.d.field_id }">
+				<MvASSIGN NAME = "l.last_opt_id"	VALUE = 0>
+				<MvASSIGN NAME = "l.opt_count"		VALUE = 0>
+			</MvIF>
+
+			<MvIF EXPR = "{ l.last_opt_id NE TGCF_Fields.d.opt_id AND NOT ISNULL TGCF_Fields.d.opt_id }">
+				<MvIF EXPR = "{ l.opt_count }">
+					<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_End() }">
+				</MvIF>
+
+				<MvIF EXPR = "{ NOT l.opt_count }">
+					, "options":
+					[
+				</MvIF>
+
+				<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_Start( l.opt_count ) }">
+				"id":			<MvEVAL EXPR = "{ int( TGCF_Fields.d.opt_id ) }">,
+				"field_id":		<MvEVAL EXPR = "{ int( TGCF_Fields.d.opt_field_id ) }">,
+				"disp_order":	<MvEVAL EXPR = "{ int( TGCF_Fields.d.opt_disp_order ) }">,
+				"code":			"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCF_Fields.d.opt_code ) }">",
+				"prompt":		"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCF_Fields.d.opt_prompt ) }">"
+
+				<MvASSIGN NAME = "l.total_count"		VALUE = "{ l.total_count + 1 }">
+				<MvASSIGN NAME = "l.last_opt_id"	VALUE = "{ TGCF_Fields.d.opt_id }">
+			</MvIF>
+
+			<MvSKIP NAME = "Merchant" VIEW = "TGCF_Fields" ROWS = 1>
+		</MvWHILE>
+
+		<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Fields">
+
+		<MvIF EXPR = "{ l.opt_count }">
+			<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_End() }">
+			]
+		</MvIF>
+
+		<MvIF EXPR = "{ l.field_count }">
+			<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_End() }">
+		</MvIF>
+		],
+		"start_offset": 0,
+		"total_count": <MvEVAL EXPR = "{ int( l.total_count ) }">
+	}
+}
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "JSON_Form_Data_Load_Query" PARAMETERS = "form_id" STANDARDOUTPUTLEVEL = "text, html, compresswhitespace">
+	<MvASSIGN NAME = "g.Filter" VALUE = "{ trim( g.Filter ) }">
+	<MvASSIGN NAME = "g.Sort" VALUE = "{ trim( g.Sort ) }">
+	<MvASSIGN NAME = "g.Offset" VALUE = "{ trim( g.Offset ) }">
+	<MvASSIGN NAME = "g.Count" VALUE = "{ trim( g.Count ) }">
+	<MvASSIGN NAME = "g.form_id" VALUE = "{ trim( l.form_id ) }">
+	<MvASSIGN NAME = "l.search_query" VALUE = "">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_SELECT( l.search_query,'s.*' ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_FROM( l.search_query, g.Store_Table_Prefix $ 'TGCF_Data', 's' ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_WHERE( l.search_query, 's.form_id = ?', 'g.form_id' ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_GROUP_BY( l.search_query, 's.group_id' ) }">
+
+	<MvEVAL EXPR = "{ JSON_Form_Data_Field_Filter( l.search_query, g.Filter ) }">
+
+	<MvIF EXPR = "{ 'Field_' CIN g.Sort }">
+		<MvASSIGN NAME = "l.search_sql" VALUE = "{ [ g.Module_Library_DB].SQL_Query_Build( l.search_query, l.search_fields ) }">
+		<MvASSIGN NAME = "l.search_sql" VALUE = "{ JSON_Form_Data_Sort_Fields( l.search_sql, g.Sort) }">
+	<MvELSE>
+		<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_OrderBy_Fields(l.search_query, g.Sort, 'id:s.id,value:s.value', 's.id' ) }">
+		<MvASSIGN NAME = "l.search_sql" VALUE = "{ [ g.Module_Library_DB].SQL_Query_Build( l.search_query, l.search_fields ) }">
+	</MvIF>
+
+	<MvCOMMENT>
+		<MvEVAl EXPR = "{ l.search_sql }">
+	</MvCOMMENT>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Library_DB ].SQL_Query_Count( l.search_query, l.total_count ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Error(g.Error_Code, g.Error_Message ) }">
+	<MvELSEIF EXPR = "{ NOT [ g.Module_Library_Native_DBAPI ].DB_OPENVIEW_Range('Merchant', 'TGCF_Data', l.search_sql, l.search_fields, g.Offset, g.Count) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Error( 'TGCF-MOD-1001',g.MvOPENVIEW_Error ) }">
+	</MvIF>
+
+	<MvASSIGN NAME = "l.count" VALUE = 0>
+
+	<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Response_Start() }">
+		{
+			"data":
+				[
+					<MvWHILE EXPR = "{ ( NOT TGCF_Data.d.EOF ) AND ( ( g.Count EQ 0 ) OR (l.count LT g.Count ) ) }">
+					<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_Start( l.count )}">
+					"id": 		<MvEVAL EXPR = "{ int( TGCF_Data.d.id ) }">
+					<MvEVAL EXPR = "{ JSON_Form_Data_Fields( TGCF_Data.d.group_id ) }">
+					<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_End() }">
+					<MvSKIP NAME = "Merchant" VIEW = "TGCF_Data" ROWS = 1>
+					<MvASSIGN NAME = "l.real_total_count" VALUE = "{ l.real_total_count + 1 }">
+					</MvWHILE>
+				],
+
+			"total_count": <MvEVAL EXPR = "{ int( l.real_total_count ) }">,
+			"start_offset": <MvEVAL EXPR = "{ int( g.Offset ) }">
+		}
+		<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Data">
+	}
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "JSON_Form_Data_Fields" PARAMETERS = "group_id" STANDARDOUTPUTLEVEL = "text, html, compresswhitespace">
+	<MvASSIGN NAME = "l.group_id" VALUE = "{ trim( l.group_id ) }">
+
+	<MvOPENVIEW	NAME	= "Merchant"
+				VIEW	= "TGCF_Data_Load"
+				QUERY	= "{ 'SELECT
+								*
+							FROM
+								' $ g.Store_Table_Prefix $ 'TGCF_Data
+							WHERE group_id = ?' }"
+				FIELDS	= "l.group_id">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvOPENVIEW_Error }">
+		<MvEVAL EXPR = "{ g.Validation_Message }">
+		<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Data_Load">
+	</MvIF>
+
+	<MvWHILE EXPR = "{ NOT TGCF_Data_Load.d.EOF }">
+		,
+		"Field_<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCF_Data_Load.d.field_id ) }">" : "<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCF_Data_Load.d.value ) }">"
+		<MvSKIP NAME = "Merchant" VIEW = "TGCF_Data_Load" ROWS = 1>
+	</MvWHILE>
+
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Data_Load">
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "JSON_Form_Data_Field_Filter" PARAMETERS = "query var, filterlist" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.success" VALUE = "{ [ g.Module_JSON ].JSON_Array_String( l.filterlist, l.filters ) }">
+	<MvIF EXPR = "{ miva_array_elements( l.filters ) EQ 1 }">
+		<MvCOMMENT> # Normal Search # </MvCOMMENT>
+		<MvFOREACH ITERATOR = "l.filter" ARRAY = "l.filters">
+			<MvASSIGN NAME = "l.filter_name"				VALUE = "{ trim( decodeattribute( gettoken( l.filter, ':', 1 ) ) ) }">
+			<MvASSIGN NAME = "l.filter_value"				VALUE = "{ trim( decodeattribute( gettoken( l.filter, ':', 2 ) ) ) }">
+			<MvASSIGN NAME = "l.where" VALUE = "">
+			<MvASSIGN NAME = "l.fields" VALUE = "">
+
+			<MvIF EXPR = "{ l.filter_name EQ 'search' }">
+				<MvFOREACH ITERATOR = "l.search" ARRAY = "l.searchlist" COUNT = "{ [ g.Module_JSON ].JSON_Array_String( l.filter_value, l.searchlist ) }">
+					<MvASSIGN NAME = "l.search_name"		VALUE = "{ trim( decodeattribute( gettoken( l.search, ':', 1 ) ) ) }">
+					<MvASSIGN NAME = "l.search_name"		VALUE = "{ glosub( l.search_name, 'Field_', '') }">
+					
+					<MvASSIGN NAME = "l.search_operator"	VALUE = "{ trim( decodeattribute( gettoken( l.search, ':', 2 ) ) ) }">
+					<MvASSIGN NAME = "l.search_value"		VALUE = "{ trim( decodeattribute( gettoken( l.search, ':', 3 ) ) ) }">
+					<MvASSIGN NAME = "l.sql_operator"		VALUE = "">
+					
+					<MvIF EXPR = "{ l.search_operator EQ 'CO' OR l.search_operator EQ 'NC' }">
+						<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( g.Fields, '%' $ l.search_value $ '%', -1 ) }">
+						<MvASSIGN NAME = "l.counter" VALUE = "{ l.counter + 1 }">
+						<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( l.fields, 'g.Fields[' $ l.counter $ ']', -1 ) }">
+					<MvELSEIF EXPR = "{ l.search_operator NE 'NULL' }">
+						<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( g.Fields, l.search_value, -1 ) }">
+						<MvASSIGN NAME = "l.counter" VALUE = "{ l.counter + 1 }">
+						<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( l.fields, 'g.Fields[' $ l.counter $ ']', -1 ) }">
+					</MvIF>
+
+					<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( g.Fields, l.search_name, -1 ) }">
+					<MvASSIGN NAME = "l.counter" VALUE = "{ l.counter + 1 }">
+					<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( l.fields, 'g.Fields[' $ l.counter $ ']', -1 ) }">
+
+					<MvIF EXPR = "{ l.search_operator EQ 'EQ' }">			<MvASSIGN NAME = "l.sql_operator" VALUE = "{ '=' }">
+					<MvELSEIF EXPR = "{ l.search_operator EQ 'GT' }">		<MvASSIGN NAME = "l.sql_operator" VALUE = "{ '>' }">
+					<MvELSEIF EXPR = "{ l.search_operator EQ 'GE' }">		<MvASSIGN NAME = "l.sql_operator" VALUE = "{ '>=' }">
+					<MvELSEIF EXPR = "{ l.search_operator EQ 'LT' }">		<MvASSIGN NAME = "l.sql_operator" VALUE = "{ '<' }">
+					<MvELSEIF EXPR = "{ l.search_operator EQ 'LE' }">		<MvASSIGN NAME = "l.sql_operator" VALUE = "{ '<=' }">
+					<MvELSEIF EXPR = "{ l.search_operator EQ 'CO' }">		<MvASSIGN NAME = "l.sql_operator" VALUE = "{ 'LIKE' }">
+					<MvELSEIF EXPR = "{ l.search_operator EQ 'NC' }">		<MvASSIGN NAME = "l.sql_operator" VALUE = "{ 'NOT LIKE'}">
+					<MvELSEIF EXPR = "{ l.search_operator EQ 'LIKE' }">		<MvASSIGN NAME = "l.sql_operator" VALUE = "{ 'LIKE' }">
+					<MvELSEIF EXPR = "{ l.search_operator EQ 'NOTLIKE' }">	<MvASSIGN NAME = "l.sql_operator" VALUE = "{ 'NOT LIKE'}">
+					<MvELSEIF EXPR = "{ l.search_operator EQ 'NE' }">		<MvASSIGN NAME = "l.sql_operator" VALUE = "{ '<>' }">
+					</MvIF>
+
+					<MvIF EXPR = "{ l.where }">
+						<MvASSIGN NAME = "l.where" VALUE = "{ l.where $ ' OR ' }">
+					</MvIF>
+
+					<MvIF EXPR = "{ l.search_operator EQ 'NULL' }">
+						<MvASSIGN NAME = "l.where" VALUE = "{ l.where $ 'group_id NOT IN ( SELECT group_id FROM ' $ g.Store_Table_Prefix $ 'TGCF_Data WHERE ( value IS NOT NULL AND field_id = ?) AND ( TRIM(value) <> \'\' AND field_id = ? )) ' }">
+						<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( g.Fields, l.search_name, -1 ) }">
+						<MvASSIGN NAME = "l.counter" VALUE = "{ l.counter + 1 }">
+						<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( l.fields, 'g.Fields[' $ l.counter $ ']', -1 ) }">
+					<MvELSEIF EXPR = "{ l.sql_operator }">
+						<MvASSIGN NAME = "l.where" VALUE = "{ l.where $ '( s.value ' $ l.sql_operator $ ' ' $ [ g.Module_Library_Native_DBAPI ].DB_Compare_UPPER( '?' ) $ ' AND s.field_id = ? )' }">
+					</MvIF>
+					
+				</MvFOREACH>
+			</MvIF>
+			<MvIF EXPR = "{ l.where }">
+				<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_WHERE( l.query, l.where, l.fields ) }">
+			</MvIF>
+		</MvFOREACH>
+	<MvELSE>
+		<MvCOMMENT> # Advanced Search # </MvCOMMENT>
+		<MvFOREACH ITERATOR = "l.filter" ARRAY = "l.filters">
+			<MvASSIGN NAME = "l.filter_name"				VALUE = "{ trim( decodeattribute( gettoken( l.filter, ':', 1 ) ) ) }">
+			<MvASSIGN NAME = "l.filter_value"				VALUE = "{ trim( decodeattribute( gettoken( l.filter, ':', 2 ) ) ) }">
+			<MvASSIGN NAME = "l.where" VALUE = "">
+			<MvASSIGN NAME = "l.fields" VALUE = "">
+
+			<MvIF EXPR = "{ l.filter_name EQ 'search' }">
+				<MvFOREACH ITERATOR = "l.search" ARRAY = "l.searchlist" COUNT = "{ [ g.Module_JSON ].JSON_Array_String( l.filter_value, l.searchlist ) }">
+					<MvASSIGN NAME = "l.search_name"		VALUE = "{ trim( decodeattribute( gettoken( l.search, ':', 1 ) ) ) }">
+					<MvASSIGN NAME = "l.search_name"		VALUE = "{ glosub( l.search_name, 'Field_', '') }">
+					
+					<MvASSIGN NAME = "l.search_operator"	VALUE = "{ trim( decodeattribute( gettoken( l.search, ':', 2 ) ) ) }">
+					<MvASSIGN NAME = "l.search_value"		VALUE = "{ trim( decodeattribute( gettoken( l.search, ':', 3 ) ) ) }">
+					<MvASSIGN NAME = "l.sql_operator"		VALUE = "">
+					
+					<MvFOREACH ITERATOR = "l.search" ARRAY = "l.searchlist" COUNT = "{ [ g.Module_JSON ].JSON_Array_String( l.filter_value, l.searchlist ) }">
+						<MvASSIGN NAME = "l.search_name"		VALUE = "{ trim( decodeattribute( gettoken( l.search, ':', 1 ) ) ) }">
+						<MvASSIGN NAME = "l.search_name"		VALUE = "{ glosub( l.search_name, 'Field_', '') }">
+						<MvASSIGN NAME = "l.search_operator"	VALUE = "{ trim( decodeattribute( gettoken( l.search, ':', 2 ) ) ) }">
+						<MvASSIGN NAME = "l.search_value"		VALUE = "{ trim( decodeattribute( gettoken( l.search, ':', 3 ) ) ) }">
+						<MvASSIGN NAME = "l.sql_operator"		VALUE = "">
+						
+						<MvIF EXPR = "{ l.search_operator EQ 'CO' OR l.search_operator EQ 'NC' }">
+							<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( g.Fields, '%' $ l.search_value $ '%', -1 ) }">
+							<MvASSIGN NAME = "l.counter" VALUE = "{ l.counter + 1 }">
+							<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( l.fields, 'g.Fields[' $ l.counter $ ']', -1 ) }">
+						<MvELSEIF EXPR = "{ l.search_operator NE 'NULL' }">
+							<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( g.Fields, l.search_value, -1 ) }">
+							<MvASSIGN NAME = "l.counter" VALUE = "{ l.counter + 1 }">
+							<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( l.fields, 'g.Fields[' $ l.counter $ ']', -1 ) }">
+						</MvIF>
+
+						<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( g.Fields, l.search_name, -1 ) }">
+						<MvASSIGN NAME = "l.counter" VALUE = "{ l.counter + 1 }">
+						<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( l.fields, 'g.Fields[' $ l.counter $ ']', -1 ) }">
+
+						<MvIF EXPR = "{ l.search_operator EQ 'EQ' }">			<MvASSIGN NAME = "l.sql_operator" VALUE = "{ '=' }">
+						<MvELSEIF EXPR = "{ l.search_operator EQ 'GT' }">		<MvASSIGN NAME = "l.sql_operator" VALUE = "{ '>' }">
+						<MvELSEIF EXPR = "{ l.search_operator EQ 'GE' }">		<MvASSIGN NAME = "l.sql_operator" VALUE = "{ '>=' }">
+						<MvELSEIF EXPR = "{ l.search_operator EQ 'LT' }">		<MvASSIGN NAME = "l.sql_operator" VALUE = "{ '<' }">
+						<MvELSEIF EXPR = "{ l.search_operator EQ 'LE' }">		<MvASSIGN NAME = "l.sql_operator" VALUE = "{ '<=' }">
+						<MvELSEIF EXPR = "{ l.search_operator EQ 'CO' }">		<MvASSIGN NAME = "l.sql_operator" VALUE = "{ 'LIKE' }">
+						<MvELSEIF EXPR = "{ l.search_operator EQ 'NC' }">		<MvASSIGN NAME = "l.sql_operator" VALUE = "{ 'NOT LIKE'}">
+						<MvELSEIF EXPR = "{ l.search_operator EQ 'LIKE' }">		<MvASSIGN NAME = "l.sql_operator" VALUE = "{ 'LIKE' }">
+						<MvELSEIF EXPR = "{ l.search_operator EQ 'NOTLIKE' }">	<MvASSIGN NAME = "l.sql_operator" VALUE = "{ 'NOT LIKE'}">
+						<MvELSEIF EXPR = "{ l.search_operator EQ 'NE' }">		<MvASSIGN NAME = "l.sql_operator" VALUE = "{ '<>' }">
+						</MvIF>
+
+						<MvIF EXPR = "{ l.where }">
+							<MvASSIGN NAME = "l.where" VALUE = "{ l.where $ ' OR ' }">
+						</MvIF>
+
+						<MvIF EXPR = "{ l.search_operator EQ 'NULL' }">
+							<MvASSIGN NAME = "l.where" VALUE = "{ l.where $ 'group_id NOT IN ( SELECT group_id FROM ' $ g.Store_Table_Prefix $ 'TGCF_Data WHERE ( value IS NOT NULL AND field_id = ?) AND ( TRIM(value) <> \'\' AND field_id = ? )) ' }">
+							<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( g.Fields, l.search_name, -1 ) }">
+							<MvASSIGN NAME = "l.counter" VALUE = "{ l.counter + 1 }">
+							<MvASSIGN NAME = "l.success" VALUE = "{ miva_array_insert( l.fields, 'g.Fields[' $ l.counter $ ']', -1 ) }">
+						<MvELSEIF EXPR = "{ l.sql_operator }">
+							<MvASSIGN NAME = "l.where" VALUE = "{ 's.group_id IN ( SELECT group_id FROM ' $ g.Store_Table_Prefix $ 'TGCF_Data WHERE value ' $ l.sql_operator $ ' ' $ [ g.Module_Library_Native_DBAPI ].DB_Compare_UPPER( '?' ) $ ' AND field_id = ? )' }">
+						</MvIF>
+						
+					</MvFOREACH>					
+				</MvFOREACH>
+			</MvIF>
+			<MvIF EXPR = "{ l.where }">
+				<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_WHERE( l.query, l.where, l.fields ) }">
+			</MvIF>
+		</MvFOREACH>
+	</MvIF>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "JSON_Form_Data_Sort_Fields" PARAMETERS = "query, sort" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvIF EXPR = "{ '-' CIN l.sort }">
+		<MvASSIGN NAME = "l.direction" VALUE = "{ 'DESC' }">
+	<MvELSE>
+		<MvASSIGN NAME = "l.direction" VALUE = "{ 'ASC' }">
+	</MvIF>
+	<MvASSIGN NAME = "l.sort" VALUE = "{ glosub( glosub( l.sort, 'Field_', '' ), '-', '') }">
+	<MvFUNCTIONRETURN VALUE = "{ l.query $ ' ORDER BY field_id = ' $ l.sort $ ', value ' $ l.direction }">
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "JSON_Form_Data_Add" PARAMETERS = "form_id" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.form_options" VALUE = "{ Load_Form_Fields( l.form_id ) }">
+	<MvFOREACH ITERATOR = "l.option" ARRAY = "l.form_options">
+		<MvASSIGN NAME = "l.option_value" VALUE = "{ miva_variable_value( 'g.Field_' $ l.option:id ) }">
+		<MvIF EXPR = "{ l.option_value }">
+			###### BEGIN HERE 
+			<MvEVAL EXPR = "{ 'insert ' $ l.option_value $ ' to field_id = ' $ l.option:id }">
+		</MvIF>
+	</MvFOREACH>
+</MvFUNCTION>

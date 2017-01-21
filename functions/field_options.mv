@@ -1,0 +1,162 @@
+<MvFUNCTION NAME = "Is_Unique_Option" PARAMETERS = "field_id, code" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvOPENVIEW	NAME	= "Merchant"
+				VIEW	= "TGCF_Options"
+				QUERY	= "{ 'SELECT id FROM ' $ g.Store_Table_Prefix $ 'TGCF_Options WHERE code = ? AND field_id = ?'}"
+				FIELDS	= "l.code, l.field_id">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCF-MOD-1002:', 'An error occurred during Is_Unique_Option().' ) }">
+	</MvIF>
+
+	<MvASSIGN NAME = "l.field_id" VALUE = "{ TGCF_Options.d.id }">
+
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Options">
+
+	<MvIF EXPR = "{ l.field_id }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ 'Please Specify a unique code for your Option.' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Add_Option" PARAMETERS = "field_id, code, prompt" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.field_id" VALUE = "{ trim(l.field_id) }">
+	<MvASSIGN NAME = "l.code" VALUE = "{ trim(l.code) }">
+	<MvASSIGN NAME = "l.prompt" VALUE = "{ trim(l.prompt) }">
+
+	<MvIF EXPR = "{ ISNULL l.code }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ 'The Option code may not be blank.' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.prompt }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ 'The Option Prompt may not be blank.' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Admin ].Validate_Code( l.code ) }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT Is_Unique_Option( l.field_id, l.code ) }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+	<MvASSIGN NAME = "l.id" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Generate( 'TGCF_Options' ) }">
+
+	<MvQUERY	NAME	= "Merchant"
+				QUERY	= "{ 'INSERT INTO ' $ g.Store_Table_Prefix $ 'TGCF_Options
+							(id, field_id, code, prompt)
+							VALUES
+							(?, ?, ?, ?)' }"
+				FIELDS = "l.id, l.field_id, l.code, l.prompt">
+
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvQUERY_Error }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Delete_Option" PARAMETERS = "id" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.id" VALUE = "{ trim( l.id ) }">
+	<MvQUERY	NAME	= "Merchant"
+				QUERY	= "{ 'DELETE FROM ' $ g.Store_Table_Prefix $ 'TGCF_Options WHERE id = ?' }"
+				FIELDS	= "l.id">
+
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvQUERY_Error }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+
+<MvFUNCTION NAME = "Update_Option" PARAMETERS ="id, code, prompt" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.id" VALUE = "{ trim( l.id ) }">
+	<MvASSIGN NAME = "l.code" VALUE = "{ trim( l.code ) }">
+	<MvASSIGN NAME = "l.prompt" VALUE = "{ trim( l.prompt ) }">
+
+	<MvIF EXPR = "{ ISNULL l.id }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ 'Error: Missing Option ID.' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.prompt }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ 'Option prompt can not be blank.' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Admin ].Validate_Code( l.code ) }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvASSIGN NAME = "l.loaded_option" VALUE = "{ Load_Option( l.id ) }">
+	<MvIF EXPR = "{ l.loaded_option:code NE l.code }">
+		<MvIF EXPR = "{ NOT Is_Unique_Option( l.loaded_option:field_id, l.code ) }">
+			<MvFUNCTIONRETURN VALUE = 0>
+		</MvIF>
+	</MvIF>
+
+	<MvQUERY	NAME	= "Merchant"
+				QUERY	= "{ 'UPDATE ' $ g.Store_Table_Prefix $ 'TGCF_Options
+								SET
+									code = ?,
+									prompt = ?
+								WHERE
+									id = ?' }"
+				FIELDS	= "l.code, l.prompt, l.id">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvQUERY_Error }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Load_Option" PARAMETERS = "id" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.id" VALUE = "{ trim( l.id ) }">
+	<MvOPENVIEW	NAME	= "Merchant"
+				VIEW	= "TGCF_Options"
+				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCF_Options WHERE id = ?' }"
+				FIELDS	= "l.id">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvOPENVIEW_Error }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvASSIGN NAME = "l.loaded_option"	MEMBER = "id"	VALUE = "{ TGCF_Options.d.id }">
+	<MvASSIGN NAME = "l.loaded_option"	MEMBER = "field_id"	VALUE = "{ TGCF_Options.d.field_id }">
+	<MvASSIGN NAME = "l.loaded_option"	MEMBER = "code"	VALUE = "{ TGCF_Options.d.code }">
+	<MvASSIGN NAME = "l.loaded_option"	MEMBER = "prompt"	VALUE = "{ TGCF_Options.d.prompt }">
+
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Options">
+	<MvFUNCTIONRETURN VALUE = "{ l.loaded_option }">
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Delete_All_Field_Options" PARAMETERS = "field_id" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.field_id" VALUE = "{ trim( l.field_id ) }">
+
+	<MvOPENVIEW	NAME	= "Merchant"
+				VIEW	= "TGCF_Options"
+				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCF_Options WHERE field_id = ?' }"
+				FIELDS	= "l.field_id">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvOPENVIEW_Error }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvWHILE EXPR = "{ NOT TGCF_Options.d.EOF }">
+
+		<MvIF EXPR = "{ NOT Delete_Option( TGCF_Options.d.id ) }">
+			<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvOPENVIEW_Error }">
+			<MvFUNCTIONRETURN VALUE = 0>
+		</MvIF>
+
+		<MvSKIP NAME = "Merchant" VIEW = "TGCF_Options" ROWS = 1>
+	</MvWHILE>
+
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Options">
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>

@@ -1,0 +1,165 @@
+<MvFUNCTION NAME = "Is_Unique_Form" PARAMETERS = "code" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvOPENVIEW	NAME	= "Merchant"
+				VIEW	= "TGCF_Forms"
+				QUERY	= "{ 'SELECT id FROM ' $ g.Store_Table_Prefix $ 'TGCF_Forms WHERE code = ?'}"
+				FIELDS	= "l.code">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCF-MOD-1002:', 'An error occurred during Is_Unique_Form().' ) }">
+	</MvIF>
+
+	<MvASSIGN NAME = "l.form_id" VALUE = "{ TGCF_Forms.d.id }">
+
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Forms">
+
+	<MvIF EXPR = "{ l.form_id }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ 'Please Specify a unique code for your form.' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Add_Form" PARAMETERS = "code, name" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.code" VALUE = "{ trim(l.code) }">
+	<MvASSIGN NAME = "l.name" VALUE = "{ trim(l.name) }">
+
+	<MvIF EXPR = "{ ISNULL l.code }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ 'The form code may not be blank.' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.name }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ 'The form name may not be blank.' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Admin ].Validate_Code( l.code ) }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT Is_Unique_Form( l.code ) }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+	<MvASSIGN NAME = "l.form_id" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Generate( 'TGCF_Forms' ) }">
+
+	<MvQUERY	NAME	= "Merchant"
+				QUERY	= "{ 'INSERT INTO ' $ g.Store_Table_Prefix $ 'TGCF_Forms
+							(id, code, name)
+							VALUES
+							(?, ?, ?)' }"
+				FIELDS = "l.form_id, l.code, l.name">
+
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvQUERY_Error }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Delete_Form" PARAMETERS = "id" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.id" VALUE = "{ trim( l.id ) }">
+	<MvQUERY	NAME	= "Merchant"
+				QUERY	= "{ 'DELETE FROM ' $ g.Store_Table_Prefix $ 'TGCF_Forms WHERE id = ?' }"
+				FIELDS	= "l.id">
+
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvQUERY_Error }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Update_Form" PARAMETERS ="id, code, name" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.id" VALUE = "{ trim( l.id ) }">
+	<MvASSIGN NAME = "l.name" VALUE = "{ trim( l.name ) }">
+	<MvASSIGN NAME = "l.code" VALUE = "{ trim( l.code ) }">
+
+	<MvIF EXPR = "{ ISNULL l.id }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ 'Error: Missing Form ID.' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.name }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ 'Form name can not be blank.' }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Admin ].Validate_Code( l.code ) }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvASSIGN NAME = "l.loaded_form" VALUE = "{ Load_Form( l.id ) }">
+	<MvIF EXPR = "{ l.loaded_form:code NE l.code }">
+		<MvIF EXPR = "{ NOT Is_Unique_Form( l.code ) }">
+			<MvFUNCTIONRETURN VALUE = 0>
+		</MvIF>
+	</MvIF>
+
+	<MvQUERY	NAME	= "Merchant"
+				QUERY	= "{ 'UPDATE ' $ g.Store_Table_Prefix $ 'TGCF_Forms
+								SET
+									name = ?,
+									code = ?
+								WHERE
+									id = ?' }"
+				FIELDS	= "l.name, l.code, l.id">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvQUERY_Error }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Load_Form" PARAMETERS = "id" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.id" VALUE = "{ trim( l.id ) }">
+	<MvOPENVIEW	NAME	= "Merchant"
+				VIEW	= "TGCF_Forms"
+				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCF_Forms WHERE id = ?' }"
+				FIELDS	= "l.id">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvOPENVIEW_Error }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvASSIGN NAME = "l.loaded_form"	MEMBER = "id"	VALUE = "{ TGCF_Forms.d.id }">
+	<MvASSIGN NAME = "l.loaded_form"	MEMBER = "code"	VALUE = "{ TGCF_Forms.d.code }">
+	<MvASSIGN NAME = "l.loaded_form"	MEMBER = "name"	VALUE = "{ TGCF_Forms.d.name }">
+
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Forms">
+	<MvFUNCTIONRETURN VALUE = "{ l.loaded_form }">
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Load_Form_Fields" PARAMETERS = "form_id" STANDARDOUTPUTLEVEL = "compresswhitespace">
+	<MvASSIGN NAME = "l.form_id" VALUE = "{ trim( l.form_id ) }">
+	<MvOPENVIEW	NAME	= "Merchant"
+				VIEW	= "TGCF_Fields"
+				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCF_Fields WHERE form_id = ?' }"
+				FIELDS	= "l.form_id">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvASSIGN NAME = "g.Validation_Message" VALUE = "{ g.MvOPENVIEW_Error }">
+		<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Fields">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvASSIGN NAME = "l.count" VALUE = "{ 1 }">
+
+	<MvWHILE EXPR = "{ NOT TGCF_Fields.d.EOF }">
+		<MvASSIGN NAME = "l.fields"	INDEX = "{ l.count }"	MEMBER = "id"			VALUE = "{ TGCF_Fields.d.id }" >
+		<MvASSIGN NAME = "l.fields"	INDEX = "{ l.count }"	MEMBER = "form_id"		VALUE = "{ TGCF_Fields.d.form_id }" >
+		<MvASSIGN NAME = "l.fields"	INDEX = "{ l.count }"	MEMBER = "code"			VALUE = "{ TGCF_Fields.d.code }" >
+		<MvASSIGN NAME = "l.fields"	INDEX = "{ l.count }"	MEMBER = "prompt"		VALUE = "{ TGCF_Fields.d.prompt }" >
+		<MvASSIGN NAME = "l.fields"	INDEX = "{ l.count }"	MEMBER = "type"			VALUE = "{ TGCF_Fields.d.type }">
+		<MvASSIGN NAME = "l.fields"	INDEX = "{ l.count }"	MEMBER = "required"		VALUE = "{ TGCF_Fields.d.required }">
+		<MvASSIGN NAME = "l.fields"	INDEX = "{ l.count }"	MEMBER = "disp_order"	VALUE = "{ TGCF_Fields.d.disp_order }">
+
+		<MvASSIGN NAME = "l.count" VALUE = "{ l.count + 1 }">
+		<MvSKIP NAME = "Merchant" VIEW = "TGCF_Fields" ROWS = 1>
+	</MvWHILE>
+
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCF_Fields">
+
+	<MvFUNCTIONRETURN VALUE = "{ l.fields }">
+</MvFUNCTION>
