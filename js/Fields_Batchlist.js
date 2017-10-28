@@ -72,6 +72,7 @@ function FieldsBatchlist( data_id ) {
 	self.SetDefaultSort( 'disp_order', '' );
 
 	self.Feature_DisplayOrder_Enable( 'disp_order', 'Fields_DisplayOrder' );
+	self.Branch_SetDisplayOrderPrefix( this.branch_options, 'Option_Order' );
 }
 
 DeriveFrom( MMBatchList, FieldsBatchlist );
@@ -127,7 +128,11 @@ FieldsBatchlist.prototype.CreateColumnList_Options = function() {
 		new MMBatchList_Column_Name( 'Code', 'code', 'code' )
 				.SetRootColumn( self.fields_code ),
 		new MMBatchList_Column_Name( 'Prompt', 'prompt', 'prompt' )
-				.SetRootColumn( self.fields_prompt )
+				.SetRootColumn( self.fields_prompt ),
+		new MMBatchList_Column( 'Display Order', 'disp_order')
+				.SetSortByField( 'disp_order' )
+				.SetSearchable( false )
+				.SetDisplayInList( false )
 	];
 
 	return columnlist;
@@ -144,7 +149,6 @@ FieldsBatchlist.prototype.onRetrieveChildBranch = function( item )
 }
 
 
-// On Save/ Edit
 FieldsBatchlist.prototype.onSave = function( item, callback, delegator ) {
 	var self = this;
 	var original_callback;
@@ -211,15 +215,38 @@ FieldsBatchlist.prototype.onDisplayOrderSave = function( fieldlist, callback ) {
 	FieldsBatchlist_DisplayOrder( fieldlist, 'Field_DisplayOrder_Update', callback, '' );
 }
 
+FieldsBatchlist.prototype.onSetDisplayOrder = function( recordlist, start_index ){
+	var i, i_len, j, j_len;
+
+	for ( i = 0, i_len = recordlist.length; i < i_len; i++ )
+	{
+		this.Feature_DisplayOrder_SetRecordOrder( recordlist[ i ], start_index + i + 1 );
+
+		if ( recordlist[ i ] )
+		{
+			if ( !recordlist[ i ].options )
+			{
+				continue;
+			}
+
+			for ( j = 0, j_len = recordlist[ i ].options.length; j < j_len; j++ )
+			{
+				this.Feature_DisplayOrder_SetRecordOrder( recordlist[ i ].options[ j ], j + 1 );
+			}
+		}
+	}
+}
+
 
 
 FieldsBatchlist.prototype.Option_Create = function() {
 	var record;
 
-	record			= new Object();
-	record.id		= 0;
-	record.code		= '';
-	record.prompt	= '';
+	record				= new Object();
+	record.id			= 0;
+	record.code			= '';
+	record.prompt		= '';
+	record.disp_order	= 0;
 
 	return record;
 }

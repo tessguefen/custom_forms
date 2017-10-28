@@ -28,12 +28,13 @@
 
 <MvFUNCTION NAME = "Option_Insert_LowLevel" PARAMETERS = "option var" STANDARDOUTPUTLEVEL = "">
 	<MvASSIGN NAME = "l.option:id" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Generate( 'TGCD_Options' ) }">
+	<MvASSIGN NAME = "l.option:disp_order" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Generate( 'TGCD_Options_DispOrder' ) }">
 
 	<MvQUERY NAME	= "Merchant"
 			 QUERY	= "{ 'INSERT INTO ' $ g.Store_Table_Prefix $ 'TGCD_Options
 					      ( id, field_id, code, prompt, disp_order )
 						  VALUES
-						  ( ?, ?, ?, ?, ?  )' }"
+						  ( ?, ?, ?, ?, ? )' }"
 			 FIELDS	= "l.option:id, l.option:field_id, l.option:code, l.option:prompt, l.option:disp_order">
 	<MvIF EXPR = "{ g.MvQUERY_Error }">
 		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-OPTION-0001', g.MvQUERY_Error ) }">
@@ -43,9 +44,8 @@
 </MvFUNCTION>
 
 <MvFUNCTION NAME = "Option_Insert" PARAMETERS = "option var" STANDARDOUTPUTLEVEL = "">
-	<MvASSIGN NAME = "l.option:code"			VALUE = "{ trim( l.option:code ) }">
+	<MvASSIGN NAME = "l.option:code"		VALUE = "{ trim( l.option:code ) }">
 	<MvASSIGN NAME = "l.option:prompt"		VALUE = "{ trim( l.option:prompt ) }">
-	<MvASSIGN NAME = "l.option:disp_order"	VALUE = "{ trim( l.option:disp_order ) }">
 
 	<MvIF EXPR = "{ NOT Field_Load_ID( l.option:field_id, l.data ) }">
 		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Invalid Field ID">
@@ -69,10 +69,6 @@
 		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Prompt must be present.">
 		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "prompt">
 		<MvFUNCTIONRETURN VALUE = 0>
-	</MvIF>
-
-	<MvIF EXPR = "{ ISNULL l.option:disp_order }">
-		<MvASSIGN NAME = "l.option:disp_order" VALUE = "0" />
 	</MvIF>
 
 	<MvIF EXPR = "{ Option_Load_Code( l.option:code, l.code_check ) }">
@@ -135,11 +131,10 @@
 			 QUERY	= "{ 'UPDATE ' $ g.Store_Table_Prefix $ 'TGCD_Options
 					      SET
 							code		= ?,
-							prompt		= ?,
-							disp_order	= ?
+							prompt		= ?
 					      WHERE
 						    id		= ?' }"
-			 FIELDS	= "l.option:code, l.option:prompt, l.option:disp_order, l.option:id">
+			 FIELDS	= "l.option:code, l.option:prompt, l.option:id">
 	<MvIF EXPR = "{ g.MvQUERY_Error }">
 		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-OPTION-0006', g.MvQUERY_Error ) }">
 	</MvIF>
@@ -154,7 +149,6 @@
 
 	<MvASSIGN NAME = "l.option:code"		VALUE = "{ trim( l.option:code ) }">
 	<MvASSIGN NAME = "l.option:prompt"		VALUE = "{ trim( l.option:prompt ) }">
-	<MvASSIGN NAME = "l.option:disp_order"	VALUE = "{ trim( l.option:disp_order ) }">
 
 	<MvIF EXPR = "{ ISNULL l.option:code }">
 		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Code must be present.">
@@ -172,10 +166,6 @@
 		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Prompt must be present.">
 		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "prompt">
 		<MvFUNCTIONRETURN VALUE = 0>
-	</MvIF>
-
-	<MvIF EXPR = "{ ISNULL l.option:disp_order }">
-		<MvASSIGN NAME = "l.option:disp_order" VALUE = "0" />
 	</MvIF>
 
 	<MvIF EXPR = "{ l.option:code NE l.prev_option:code }">
@@ -253,4 +243,142 @@
 	</MvIF>
 	
 	<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Success() }">
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "OptionList_Update_Offsets" PARAMETERS = "field_id, options var" STANDARDOUTPUTLEVEL = "">
+	<MvASSIGN NAME = "l.pastend_count"				VALUE = 0>
+
+	<MvASSIGN NAME = "l.option_pos"				VALUE = 1>
+	<MvASSIGN NAME = "l.option_count"			VALUE = "{ miva_array_elements( l.options ) }">
+	<MvASSIGN NAME = "g.Option_Field_ID" 		VALUE = "{ l.field_id }">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_Utilities ].SortOffsetArray( l.options, l.option_count ) }">
+
+	<MvWHILE EXPR = "{ l.option_pos LE l.option_count }">
+		<MvASSIGN NAME = "g.Option_Order_FieldID" 	VALUE = "{ l.options[ l.option_pos ]:id }">
+
+		<MvCOMMENT>
+		|
+		| Determine disp_order of current option at this offset.
+		|
+		</MvCOMMENT>
+
+		<MvIF EXPR = "{ NOT [ g.Module_Library_Native_DBAPI ].DB_OPENVIEW_Range( 'Merchant',
+																				   'TGCD_Options',
+																				   'SELECT id, disp_order FROM ' $ g.Store_Table_Prefix $ 'TGCD_Options WHERE id <> ? AND field_id = ? ORDER BY disp_order',
+																				   'g.Option_Order_FieldID, g.Option_Field_ID',
+																				   l.options[ l.option_pos ]:offset - 1,
+																				   1 ) }">
+			<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-OPTION-0009', g.MvOPENVIEW_Error ) }">
+		</MvIF>
+
+		<MvIF EXPR = "{ TGCD_Options.d.EOF }">
+			<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Options">
+
+			<MvCOMMENT>
+			|
+			| Offset was higher than the last record.  This case requires specialized processing, so save this record for later.
+			|
+			</MvCOMMENT>
+
+			<MvASSIGN NAME = "l.pastend_count"							VALUE = "{ l.pastend_count + 1 }">
+			<MvASSIGN NAME = "l.pastend" INDEX = "{ l.pastend_count }"	VALUE = "{ l.options[ l.option_pos ] }">
+
+			<MvASSIGN NAME = "l.option_pos"	VALUE = "{ l.option_pos + 1 }">
+		<MvELSEIF EXPR = "{ l.pastend_count }">
+			<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Options">
+
+			<MvIF EXPR = "{ NOT OptionList_Update_Offsets_PastEnd( l.data_id, l.pastend, l.pastend_count ) }">
+				<MvFUNCTIONRETURN VALUE = 0>
+			</MvIF>
+
+			<MvASSIGN NAME = "l.pastend_count" VALUE = 0>
+		<MvELSE>
+			<MvASSIGN NAME = "l.disp_order" VALUE = "{ TGCD_Options.d.disp_order }">
+			<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Options">
+
+			<MvCOMMENT>
+			|
+			| Make a hole by shifting options after this disp_order down
+			|
+			</MvCOMMENT>
+
+			<MvQUERY NAME = "Merchant" QUERY = "{ 'UPDATE ' 
+														$ g.Store_Table_Prefix $ 'TGCD_Options 
+													SET 
+														disp_order = disp_order + 1 
+													WHERE 
+														disp_order >= ? AND field_id = ?' }" 
+													FIELDS = "l.disp_order, l.field_id">
+			<MvIF EXPR = "{ g.MvQUERY_Error }">
+				<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-OPTION-0010', g.MvQUERY_Error ) }">
+			</MvIF>
+
+			<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Generate( 'TGCD_Options_DispOrder' ) }">
+
+			<MvCOMMENT>
+			|
+			| Put the option in the newly created hole
+			|
+			</MvCOMMENT>
+
+			<MvQUERY NAME = "Merchant" QUERY = "{ 'UPDATE ' 
+														$ g.Store_Table_Prefix $ 'TGCD_Options 
+													SET 
+														disp_order = ? 
+													WHERE 
+														id = ? AND field_id = ?' }" 
+													FIELDS = "l.disp_order, g.Option_Order_FieldID, l.field_id">
+			<MvIF EXPR = "{ g.MvQUERY_Error }">
+				<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-OPTION-0011', g.MvQUERY_Error ) }">
+			</MvIF>
+
+			<MvASSIGN NAME = "l.option_pos"	VALUE = "{ l.option_pos + 1 }">
+		</MvIF>
+	</MvWHILE>
+
+	<MvCOMMENT>
+	|
+	| If all the downward records were past the end, they must be processed here.
+	|
+	</MvCOMMENT>
+
+	<MvIF EXPR = "{ l.pastend_count }">
+		<MvIF EXPR = "{ NOT OptionList_Update_Offsets_PastEnd( l.data_id, l.pastend, l.pastend_count ) }">
+			<MvFUNCTIONRETURN VALUE = 0>
+		</MvIF>
+	</MvIF>		
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "OptionList_Update_Offsets_PastEnd" PARAMETERS = "field_id, pastend var, pastend_count" STANDARDOUTPUTLEVEL = "">
+	<MvCOMMENT>
+	|
+	| Process records moving past the end.  These records must be sorted in ascending order.
+	|
+	</MvCOMMENT>
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_Utilities ].SortOffsetArray_PastEnd( l.pastend, l.pastend_count ) }">
+
+	<MvASSIGN NAME = "l.pastend_pos"		VALUE = 1>
+	<MvWHILE EXPR = "{ l.pastend_pos LE l.pastend_count }">
+		<MvASSIGN NAME = "g.Option_Order_FieldID" 	VALUE = "{ l.pastend[ l.pastend_pos ]:id }">
+		<MvASSIGN NAME = "l.disp_order"				VALUE = "{ [ g.Module_Library_DB ].StoreKey_Generate( 'TGCD_Options_DispOrder' ) }">
+
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'UPDATE ' 
+													$ g.Store_Table_Prefix $ 'TGCD_Options 
+												SET 
+													disp_order = ? 
+												WHERE 
+													id = ? AND field_id = ?' }" 
+												FIELDS = "l.disp_order, g.Option_Order_FieldID, l.field_id">
+		<MvIF EXPR = "{ g.MvQUERY_Error }">
+			<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-OPTION-0012', g.MvQUERY_Error ) }">
+		</MvIF>
+		
+		<MvASSIGN NAME = "l.pastend_pos"	VALUE = "{ l.pastend_pos + 1 }">
+	</MvWHILE>
+
+	<MvFUNCTIONRETURN VALUE = 1>
 </MvFUNCTION>
