@@ -31,6 +31,8 @@ function DataBatchlist() {
 	self.Feature_RowDoubleClick_Enable();
 	self.processingdialog = new ProcessingDialog();
 	self.Feature_GoTo_Enable('Open Data', '');
+
+	self.SetDefaultSort( 'disp_order', '' );
 }
 
 DeriveFrom( MMBatchList, DataBatchlist );

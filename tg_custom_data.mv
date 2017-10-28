@@ -40,15 +40,18 @@ sXX_TGCD_Values
 +---------------------+--------------------------+--------------------+---------------------+-------+
 
 
-+-----------------+
-|    StoreKeys    |
-+-----------------+
-| TGCD_Data       |
-| TGCD_Fields     |
-| TGCD_Options    |
-| TGCD_Value      |
-| TGCD_ValueGroup |
-+-----------------+
++-----------------------+
+|       StoreKeys       |
++-----------------------+
+| TGCD_Data             |
+| TGCD_Fields_          |
+| TGCD_Fields_DispOrder |
+| TGCD_Options          |
+| TGCD_Options_DisOrder |
+| TGCD_Value            |
+| TGCD_ValueGroup       |
++-----------------------+
+
 
 </MvCOMMENT>
 
@@ -148,19 +151,29 @@ sXX_TGCD_Values
 		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-INSTALL-0006:', 'An error occured while creating the storekey, TGCD_Fields. Please make sure this does not already exsist.' ) }">
 	</MvIF>
 
+	<MvIF EXPR = "{ NOT [ g.Module_Library_DB ].StoreKey_Insert( 'TGCD_Fields_DispOrder', 1 ) }">
+		<MvASSIGN NAME = "l.void" VALUE = "{ Module_Uninstall_Store( l.module ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-INSTALL-0007:', 'An error occured while creating the storekey, TGCD_Fields_DispOrder. Please make sure this does not already exsist.' ) }">
+	</MvIF>
+
 	<MvIF EXPR = "{ NOT [ g.Module_Library_DB ].StoreKey_Insert( 'TGCD_Options', 1 ) }">
 		<MvASSIGN NAME = "l.void" VALUE = "{ Module_Uninstall_Store( l.module ) }">
-		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-INSTALL-0007:', 'An error occured while creating the storekey, TGCD_Options. Please make sure this does not already exsist.' ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-INSTALL-0008:', 'An error occured while creating the storekey, TGCD_Options. Please make sure this does not already exsist.' ) }">
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Library_DB ].StoreKey_Insert( 'TGCD_Options_DispOrder', 1 ) }">
+		<MvASSIGN NAME = "l.void" VALUE = "{ Module_Uninstall_Store( l.module ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-INSTALL-0009:', 'An error occured while creating the storekey, TGCD_Options_DispOrder. Please make sure this does not already exsist.' ) }">
 	</MvIF>
 
 	<MvIF EXPR = "{ NOT [ g.Module_Library_DB ].StoreKey_Insert( 'TGCD_Value', 1 ) }">
 		<MvASSIGN NAME = "l.void" VALUE = "{ Module_Uninstall_Store( l.module ) }">
-		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-INSTALL-0008:', 'An error occured while creating the storekey, TGCD_Value. Please make sure this does not already exsist.' ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-INSTALL-0010:', 'An error occured while creating the storekey, TGCD_Value. Please make sure this does not already exsist.' ) }">
 	</MvIF>
 
 	<MvIF EXPR = "{ NOT [ g.Module_Library_DB ].StoreKey_Insert( 'TGCD_ValueGroup', 1 ) }">
 		<MvASSIGN NAME = "l.void" VALUE = "{ Module_Uninstall_Store( l.module ) }">
-		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-INSTALL-0009:', 'An error occured while creating the storekey, TGCD_ValueGroup. Please make sure this does not already exsist.' ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-INSTALL-0011:', 'An error occured while creating the storekey, TGCD_ValueGroup. Please make sure this does not already exsist.' ) }">
 	</MvIF>
 
 	<MvFUNCTIONRETURN VALUE = 1 />
@@ -178,7 +191,9 @@ sXX_TGCD_Values
 
 	<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCD_Data' ) }">
 	<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCD_Fields' ) }">
+	<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCD_Fields_DispOrder' ) }">
 	<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCD_Options' ) }">
+	<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCD_Options_DispOrder' ) }">
 	<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCD_Value' ) }">
 	<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCD_ValueGroup' ) }">
 
@@ -280,16 +295,17 @@ sXX_TGCD_Values
 </MvCOMMENT>
 
 <MvFUNCTION NAME = "Module_JSON" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "">
-	<MvIF EXPR = "{ NOT g.Admin_Open_Store }"><MvFUNCTIONRETURN></MvIF>
+	<MvCOMMENT><MvIF EXPR = "{ NOT g.Admin_Open_Store }"><MvFUNCTIONRETURN></MvIF></MvCOMMENT>
 	<MvIF EXPR = "{ g.Module_Function EQ 'Data_Load_Query'}">		<MvFUNCTIONRETURN VALUE = "{ JSON_Data_Load_Query( l.module ) }">	</MvIF>
 	<MvIF EXPR = "{ g.Module_Function EQ 'Data_Update'}">			<MvFUNCTIONRETURN VALUE = "{ JSON_Data_Update( l.module ) }">		</MvIF>
 	<MvIF EXPR = "{ g.Module_Function EQ 'Data_Insert'}">			<MvFUNCTIONRETURN VALUE = "{ JSON_Data_Insert( l.module ) }">		</MvIF>
 	<MvIF EXPR = "{ g.Module_Function EQ 'Data_Delete'}">			<MvFUNCTIONRETURN VALUE = "{ JSON_Data_Delete( l.module ) }">		</MvIF>
 
-	<MvIF EXPR = "{ g.Module_Function EQ 'Fields_Load_Query' }">	<MvFUNCTIONRETURN VALUE = "{ JSON_Fields_Load_Query( l.module ) }">	</MvIF>
-	<MvIF EXPR = "{ g.Module_Function EQ 'Field_Insert' }">			<MvFUNCTIONRETURN VALUE = "{ JSON_Field_Insert( l.module ) }">		</MvIF>
-	<MvIF EXPR = "{ g.Module_Function EQ 'Field_Update' }">			<MvFUNCTIONRETURN VALUE = "{ JSON_Field_Update( l.module ) }">		</MvIF>
-	<MvIF EXPR = "{ g.Module_Function EQ 'Field_Delete' }">			<MvFUNCTIONRETURN VALUE = "{ JSON_Field_Delete( l.module ) }">		</MvIF>
+	<MvIF EXPR = "{ g.Module_Function EQ 'Fields_Load_Query' }">			<MvFUNCTIONRETURN VALUE = "{ JSON_Fields_Load_Query( l.module ) }">			</MvIF>
+	<MvIF EXPR = "{ g.Module_Function EQ 'Field_Insert' }">					<MvFUNCTIONRETURN VALUE = "{ JSON_Field_Insert( l.module ) }">				</MvIF>
+	<MvIF EXPR = "{ g.Module_Function EQ 'Field_Update' }">					<MvFUNCTIONRETURN VALUE = "{ JSON_Field_Update( l.module ) }">				</MvIF>
+	<MvIF EXPR = "{ g.Module_Function EQ 'Field_Delete' }">					<MvFUNCTIONRETURN VALUE = "{ JSON_Field_Delete( l.module ) }">				</MvIF>
+	<MvIF EXPR = "{ g.Module_Function EQ 'Field_DisplayOrder_Update' }">	<MvFUNCTIONRETURN VALUE = "{ JSON_Field_DisplayOrder_Update( l.module ) }">	</MvIF>
 
 	<MvIF EXPR = "{ g.Module_Function EQ 'Option_Insert' }">		<MvFUNCTIONRETURN VALUE = "{ JSON_Option_Insert( l.module ) }">		</MvIF>
 	<MvIF EXPR = "{ g.Module_Function EQ 'Option_Update' }">		<MvFUNCTIONRETURN VALUE = "{ JSON_Option_Update( l.module ) }">		</MvIF>

@@ -30,6 +30,7 @@
 
 <MvFUNCTION NAME = "Field_Insert_LowLevel" PARAMETERS = "field var" STANDARDOUTPUTLEVEL = "">
 	<MvASSIGN NAME = "l.field:id" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Generate( 'TGCD_Fields' ) }">
+	<MvASSIGN NAME = "l.field:disp_order" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Generate( 'TGCD_Fields_DispOrder' ) }">
 
 	<MvQUERY NAME	= "Merchant"
 			 QUERY	= "{ 'INSERT INTO ' $ g.Store_Table_Prefix $ 'TGCD_Fields
@@ -151,11 +152,10 @@
 							code		= ?,
 							prompt		= ?,
 							type		= ?,
-							required	= ?,
-							disp_order	= ?
+							required	= ?
 					      WHERE
 						    id		= ?' }"
-			 FIELDS	= "l.field:code, l.field:prompt, l.field:type, l.field:required, l.field:disp_order, l.field:id">
+			 FIELDS	= "l.field:code, l.field:prompt, l.field:type, l.field:required, l.field:id">
 	<MvIF EXPR = "{ g.MvQUERY_Error }">
 		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-FIELD-0006', g.MvQUERY_Error ) }">
 	</MvIF>
@@ -202,10 +202,6 @@
 		<MvASSIGN NAME = "l.field:required" VALUE = "0" />
 	</MvIF>
 
-	<MvIF EXPR = "{ ISNULL l.field:disp_order }">
-		<MvASSIGN NAME = "l.field:disp_order" VALUE = "0" />
-	</MvIF>
-
 	<MvIF EXPR = "{ l.field:code NE l.prev_field:code }">
 		<MvIF EXPR = "{ Field_Load_Code( l.data:code, l.code_check ) AND ( l.code_check:data_id EQ l.field:data_id ) }">
 			<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "This code already exist.">
@@ -225,6 +221,12 @@
 		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "{ g.MvQUERY_Error }">
 		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
 		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-FIELD-0007', g.MvQUERY_Error ) }">
+	</MvIF>
+	
+	<MvIF EXPR = "{ NOT Option_Delete_Field_All( l.field_id ) }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-FIELD-008', g.MvQUERY_Error ) }">
 	</MvIF>
 	<MvFUNCTIONRETURN VALUE = 1>
 </MvFUNCTION>
@@ -394,4 +396,178 @@
 	</MvIF>
 	
 	<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Success() }">
+</MvFUNCTION>
+
+
+<MvFUNCTION NAME = "JSON_Field_DisplayOrder_Update" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "text, html, compresswhitespace">
+	<MvASSIGN NAME = "l.data_id" VALUE = "{ g.Data_ID }">
+	<MvFOREACH ITERATOR = "l.field_order" ARRAY = "g.Fields_DisplayOrder" INDEX = "l.pos">
+		<MvASSIGN NAME = "l.field_order:id"				VALUE = "{ int( l.field_order:id ) }">
+		<MvASSIGN NAME = "l.field_order:offset"			VALUE = "{ int( l.field_order:offset ) }">
+		<MvASSIGN NAME = "l.field_order:original_offset"	VALUE = "{ int( l.field_order:original_offset ) }">
+
+		<MvIF EXPR = "{ NOT [ g.Module_Admin ].Validate_WholeNumber_Positive_Required( l.field_order:offset ) }">
+			<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_FieldError( 'field_order[' $ l.pos $ ']', g.Validation_Message ) }">
+		</MvIF>
+	</MvFOREACH>
+
+	<MvASSIGN NAME = "l.change_count"								VALUE = 0>
+
+	<MvFOREACH ITERATOR = "l.field_order" ARRAY = "g.Fields_DisplayOrder">
+		<MvIF EXPR = "{ l.field_order:offset EQ l.field_order:original_offset }">
+			<MvFOREACHCONTINUE>
+		</MvIF>
+
+		<MvASSIGN NAME = "l.change_count"							VALUE = "{ l.change_count + 1 }">
+		<MvASSIGN NAME = "l.changes" INDEX = "{ l.change_count }"	VALUE = "{ l.field_order }">
+	</MvFOREACH>
+
+	<MvIF EXPR = "{ l.change_count EQ 0 }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Success() }">
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT Field_Update_Offsets( l.changes, l.data_id ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Error( g.Error_Code, g.Error_Message ) }">
+	</MvIF>
+	
+	<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Success() }">
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Field_Update_Offsets" PARAMETERS = "fields var, data_id" STANDARDOUTPUTLEVEL = "">
+	<MvASSIGN NAME = "l.pastend_count"						VALUE = 0>
+
+	<MvASSIGN NAME = "l.field_pos"						VALUE = 1>
+	<MvASSIGN NAME = "l.field_count"					VALUE = "{ miva_array_elements( l.fields ) }">
+
+	<MvASSIGN NAME = "g.Data_ID" VALUE = "{ l.data_id }">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_Utilities ].SortOffsetArray( l.fields, l.field_count ) }">
+
+	<MvWHILE EXPR = "{ l.field_pos LE l.field_count }">
+		<MvASSIGN NAME = "g.Fields_Order_ID" 	VALUE = "{ l.fields[ l.field_pos ]:id }">
+
+		<MvCOMMENT>
+		|
+		| Determine disp_order of current product at this offset.
+		|
+		</MvCOMMENT>
+
+		<MvIF EXPR = "{ NOT [ g.Module_Library_Native_DBAPI ].DB_OPENVIEW_Range( 'Merchant',
+																		 'TGCD_Fields',
+																		 'SELECT id, disp_order FROM ' $ g.Store_Table_Prefix $ 'TGCD_Fields WHERE id <> ? AND data_id = ? ORDER BY disp_order',
+																		 'g.Fields_Order_ID, g.Data_ID',
+																		 l.fields[ l.field_pos ]:offset - 1,
+																		 1 ) }">
+			<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-FIELD-0008', g.MvOPENVIEW_Error ) }">
+		</MvIF>
+
+		<MvIF EXPR = "{ TGCD_Fields.d.EOF }">
+			<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Fields">
+
+			<MvCOMMENT>
+			|
+			| Offset was higher than the last record.  This case requires specialized processing, so save this record for later.
+			|
+			</MvCOMMENT>
+
+			<MvASSIGN NAME = "l.pastend_count"							VALUE = "{ l.pastend_count + 1 }">
+			<MvASSIGN NAME = "l.pastend" INDEX = "{ l.pastend_count }"	VALUE = "{ l.fields[ l.field_pos ] }">
+
+			<MvASSIGN NAME = "l.field_pos"	VALUE = "{ l.field_pos + 1 }">
+		<MvELSEIF EXPR = "{ l.pastend_count }">
+			<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Fields">
+
+			<MvIF EXPR = "{ NOT Fields_Update_Offsets_PastEnd( l.pastend, l.pastend_count ) }">
+				<MvFUNCTIONRETURN VALUE = 0>
+			</MvIF>
+
+			<MvASSIGN NAME = "l.pastend_count" VALUE = 0>
+		<MvELSE>
+			<MvASSIGN NAME = "l.disp_order" VALUE = "{ TGCD_Fields.d.disp_order }">
+			<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Fields">
+
+			<MvCOMMENT>
+			|
+			| Make a hole by shifting TGCD_Fields after this disp_order down
+			|
+			</MvCOMMENT>
+
+			<MvQUERY NAME = "Merchant" QUERY = "{ 'UPDATE ' 
+														$ g.Store_Table_Prefix $ 'TGCD_Fields 
+													SET 
+														disp_order = disp_order + 1 
+													WHERE 
+														disp_order >= ?' }" 
+													FIELDS = "l.disp_order">
+			<MvIF EXPR = "{ g.MvQUERY_Error }">
+				<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-FIELD-0009', g.MvQUERY_Error ) }">
+			</MvIF>
+
+			<MvASSIGN NAME = "l.void" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Generate( 'TGCD_Fields_DispOrder' ) }">
+
+			<MvCOMMENT>
+			|
+			| Put the product in the newly created hole
+			|
+			</MvCOMMENT>
+
+			<MvQUERY NAME = "Merchant" QUERY = "{ 'UPDATE ' 
+														$ g.Store_Table_Prefix $ 'TGCD_Fields 
+													SET 
+														disp_order = ? 
+													WHERE 
+														id = ?' }" 
+													FIELDS = "l.disp_order, g.Fields_Order_ID">
+			<MvIF EXPR = "{ g.MvQUERY_Error }">
+				<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-FIELD-0010', g.MvQUERY_Error ) }">
+			</MvIF>
+
+			<MvASSIGN NAME = "l.field_pos"	VALUE = "{ l.field_pos + 1 }">
+		</MvIF>
+	</MvWHILE>
+
+	<MvCOMMENT>
+	|
+	| If all the downward records were past the end, they must be processed here.
+	|
+	</MvCOMMENT>
+
+	<MvIF EXPR = "{ l.pastend_count }">
+		<MvIF EXPR = "{ NOT Fields_Update_Offsets_PastEnd( l.pastend, l.pastend_count ) }">
+			<MvFUNCTIONRETURN VALUE = 0>
+		</MvIF>
+	</MvIF>		
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Fields_Update_Offsets_PastEnd" PARAMETERS = "pastend var, pastend_count" STANDARDOUTPUTLEVEL = "">
+	<MvCOMMENT>
+	|
+	| Process records moving past the end.  These records must be sorted in ascending order.
+	|
+	</MvCOMMENT>
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_Utilities ].SortOffsetArray_PastEnd( l.pastend, l.pastend_count ) }">
+
+	<MvASSIGN NAME = "l.pastend_pos"		VALUE = 1>
+	<MvWHILE EXPR = "{ l.pastend_pos LE l.pastend_count }">
+		<MvASSIGN NAME = "g.Fields_Order_ID" 	VALUE = "{ l.pastend[ l.pastend_pos ]:id }">
+		<MvASSIGN NAME = "l.disp_order"					VALUE = "{ [ g.Module_Library_DB ].StoreKey_Generate( 'TGCD_Fields_DispOrder' ) }">
+
+		<MvQUERY NAME = "Merchant" QUERY = "{ 'UPDATE ' 
+													$ g.Store_Table_Prefix $ 'TGCD_Fields 
+												SET 
+													disp_order = ? 
+												WHERE 
+													id = ?' }" 
+												FIELDS = "l.disp_order, g.Fields_Order_ID">
+		<MvIF EXPR = "{ g.MvQUERY_Error }">
+			<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-FIELD-0011', g.MvQUERY_Error ) }">
+		</MvIF>
+		
+		<MvASSIGN NAME = "l.pastend_pos"	VALUE = "{ l.pastend_pos + 1 }">
+	</MvWHILE>
+
+	<MvFUNCTIONRETURN VALUE = 1>
 </MvFUNCTION>

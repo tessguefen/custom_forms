@@ -3,6 +3,18 @@
 |	Functions for OPTIONS
 |
 |	Option_Read( option var, view )
+|	Option_Insert_LowLevel( option var )
+|	Option_Insert( option var )
+|	Option_Load_ID( id, output var )
+|	Option_Load_Code( code, output var )
+|	Option_Update_LowLevel( option var )
+|	Option_Update( option var )
+|	Option_Delete( option_id )
+|	Option_Delete_Field_All( field_id )
+|
+|	JSON_Option_Insert( module var )
+|	JSON_Option_Update( module var )
+|	JSON_Option_Delete( module var )
 |
 |
 </MvCOMMENT>
@@ -185,6 +197,18 @@
 		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "{ g.MvQUERY_Error }">
 		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
 		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-OPTION-0007', g.MvQUERY_Error ) }">
+	</MvIF>
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Option_Delete_Field_All" PARAMETERS = "field_id" STANDARDOUTPUTLEVEL = "">
+	<MvQUERY NAME	= "Merchant"
+			 QUERY	= "{ 'DELETE FROM ' $ g.Store_Table_Prefix $ 'TGCD_Options WHERE field_id = ?' }"
+			 FIELDS	= "l.field_id">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-OPTION-0008', g.MvQUERY_Error ) }">
 	</MvIF>
 	<MvFUNCTIONRETURN VALUE = 1>
 </MvFUNCTION>

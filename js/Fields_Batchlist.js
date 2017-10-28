@@ -32,6 +32,21 @@ function FieldsBatchlist_Option_Function( parentlist, fieldlist, _function, call
 									   delegator );
 }
 
+function FieldsBatchlist_DisplayOrder( fields, _function, callback, delegator ) {
+	var i;
+	var parameters = 'Data_ID=' + Data_ID;
+	for ( i = 0; i < fields.length; i++ ) {
+		parameters += ( parameters.length ? '&' : '' ) + encodeURIComponent( fields[ i ].name ) + '=' + encodeURIComponent( fields[ i ].value );
+	}
+	return AJAX_Call_Module_FieldList( callback,
+									   'admin',
+									   'TGCD',
+									   _function,
+									   parameters,
+									   '',
+									   delegator );
+}
+
 function FieldsBatchlist( data_id ) {
 	var self = this;
 	self.data_id = data_id;
@@ -54,7 +69,9 @@ function FieldsBatchlist( data_id ) {
 	self.Feature_Add_Enable( 'Add Field', 'Save Field', 'Add Option', 'Cancel', 'Add Field', 'Save Field', 'Add Option', '' );
 
 	self.Feature_SearchBar_SetPlaceholderText( 'Search Fields...' );
-	self.SetDefaultSort( 'id', '' );
+	self.SetDefaultSort( 'disp_order', '' );
+
+	self.Feature_DisplayOrder_Enable( 'disp_order', 'Fields_DisplayOrder' );
 }
 
 DeriveFrom( MMBatchList, FieldsBatchlist );
@@ -82,11 +99,11 @@ FieldsBatchlist.prototype.onCreateRootColumnList = function() {
 											.SetContentAttributeList( { 'class': 'mm9_batchlist_level_col' } );
 		self.fields_required		=	new MMBatchList_Column_Checkbox( 'Required', 'required', 'required')
 											.SetContentAttributeList( { 'class': 'mm9_batchlist_level_col' } );
-		self.fields_display_order	=	new MMBatchList_Column_Name( 'Display Order', 'disp_order', 'disp_order')
-										.SetDisplayInMenu(false)
-										.SetDisplayInList(false)
-										.SetAdvancedSearchEnabled(false)
-										.SetContentAttributeList( { 'class': 'mm9_batchlist_level_col' } );
+		self.fields_display_order	=	new MMBatchList_Column( 'Display Order', 'disp_order')
+										.SetDisplayInList( false )
+										.SetSearchable( false )
+										.SetSortByField( 'disp_order' )
+										.SetUpdateOnModifiedOnly( true ),
 	columnlist =
 	[
 		self.fields_id,
@@ -187,6 +204,11 @@ FieldsBatchlist.prototype.onDelete = function( item, callback, delegator ) {
 
 FieldsBatchlist.prototype.onInsert = function( item, callback, delegator ) {
 	FieldsBatchlist_Function( item.record.mmbatchlist_fieldlist, 'Field_Insert', callback, delegator );
+}
+
+FieldsBatchlist.prototype.onDisplayOrderSave = function( fieldlist, callback ) {
+	console.log( fieldlist );
+	FieldsBatchlist_DisplayOrder( fieldlist, 'Field_DisplayOrder_Update', callback, '' );
 }
 
 
