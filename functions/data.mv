@@ -181,6 +181,9 @@
 		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
 		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-DATA-0007', g.MvQUERY_Error ) }">
 	</MvIF>
+	
+	<MvASSIGN NAME = "l.void" VALUE = "{ Delete_Data_Fields( l.data_id ) }">
+
 	<MvFUNCTIONRETURN VALUE = 1>
 </MvFUNCTION>
 

@@ -14,7 +14,14 @@
 |	JSON_Field_Insert( module var )
 |	JSON_Field_Update( module var )
 |	JSON_Field_Delete( module var )
+|	JSON_Field_DisplayOrder_Update( module var )
+|	JSON_Load_Fields( module var )
 |
+|	FieldList_Update_Offsets( data_id, fields var)
+|	FieldList_Update_Offsets_PastEnd( data_id, pastend var, pastend_count )
+|
+|	Load_Data_Fields( data_id, output var )
+|	Delete_Data_Fields( data_id )
 |
 </MvCOMMENT>
 
@@ -462,6 +469,27 @@
 	<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Success() }">
 </MvFUNCTION>
 
+<MvFUNCTION NAME = "JSON_Load_Fields" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "text, html, compresswhitespace">
+	<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Response_Start() }">
+		{
+			"fields":
+			[
+			<MvFOREACH ITERATOR = "l.field" ARRAY = "l.fields" COUNT = "{ Load_Data_Fields( g.Data_ID, l.fields ) }" INDEX = "{ l.count }">
+				<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_Start( l.count )}">
+					"id": <MvEVAL EXPR = "{ int( l.field:id ) }">,
+					"data_id": <MvEVAL EXPR = "{ int( l.field:data_id ) }">,
+					"code" : "<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( l.field:code ) }">",
+					"prompt" : "<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( l.field:prompt ) }">",
+					"type" : "<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( l.field:type ) }">",
+					"required": <MvEVAL EXPR = "{ int( l.field:required ) }">,
+					"disp_order": <MvEVAL EXPR = "{ int( l.field:disp_order ) }">
+				<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_End() }">
+			</MvFOREACH>
+			]
+		}
+	}
+</MvFUNCTION>
+
 <MvFUNCTION NAME = "FieldList_Update_Offsets" PARAMETERS = "data_id, fields var" STANDARDOUTPUTLEVEL = "">
 	<MvASSIGN NAME = "l.pastend_count"				VALUE = 0>
 
@@ -597,5 +625,39 @@
 		<MvASSIGN NAME = "l.pastend_pos"	VALUE = "{ l.pastend_pos + 1 }">
 	</MvWHILE>
 
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Load_Data_Fields" PARAMETERS = "data_id, output var" STANDARDOUTPUTLEVEL = "">
+	<MvOPENVIEW NAME	= "Merchant"
+				VIEW	= "TGCD_Fields"
+				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCD_Fields WHERE data_id = ?' }"
+				FIELDS	= "l.data_id">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-FIELD-0013', g.MvOPENVIEW_Error ) }">
+	</MvIF>
+
+	<MvIF EXPR = "{ TGCD_Fields.d.EOF }">
+		<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Fields">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_DB ].Error_Load_EOF( 'TGCD-FIELD-0014' ) }">
+	</MvIF>
+	
+	<MvASSIGN NAME = "l.count" VALUE = "0">
+
+	<MvWHILE EXPR = "{ ( NOT TGCD_Fields.d.EOF ) }">
+		<MvEVAL EXPR = "{ Field_Read( l.output[++l.count], 'TGCD_Fields' ) }">
+		<MvSKIP NAME = "Merchant" VIEW = "TGCD_Fields" ROWS = 1>
+	</MvWHILE>
+
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Fields">
+
+	<MvFUNCTIONRETURN VALUE = "{ l.count }">
+</MvFUNCTION>
+<MvFUNCTION NAME = "Delete_Data_Fields" PARAMETERS = "data_id" STANDARDOUTPUTLEVEL = "">
+	<MvFOREACH ITERATOR = "l.field" ARRAY = "l.fields" COUNT = "{ Load_Data_Fields( l.data_id, l.fields ) }">
+		<MvIF EXPR = "{ NOT Field_Delete( l.field:id ) }">
+			<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-FIELD-0015', g.MvOPENVIEW_Error ) }">
+		</MvIF>
+	</MvFOREACH>
 	<MvFUNCTIONRETURN VALUE = 1>
 </MvFUNCTION>

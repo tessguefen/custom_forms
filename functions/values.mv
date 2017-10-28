@@ -1,0 +1,34 @@
+<MvCOMMENT>
+|
+|	Functions for VALUES
+|	
+|		Value_Read( value var, view )
+|		Value_Insert_LowLevel( value var )
+|		Value_Insert( value var )
+|		Value_Load_ID( id, output var )
+|		Value_Load_Code( code, output var )
+|		Value_Update_LowLevel( value var )
+|		Value_Update( value var )
+|		Value_Delete( value_id )
+|
+|		JSON_Value_Load_Query( module var )
+|		JSON_Value_Insert( module var )
+|		JSON_Value_Update( module var )
+|		JSON_Value_Delete( module var )
+|
+|		Data_Value( module var )
+|
+</MvCOMMENT>
+
+<MvFUNCTION NAME = "Data_Value" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "text, html">
+	<MvEVAL EXPR = "{ [ g.Module_Admin ].Element_MMBatchList_JavaScript() }">
+	<MvEVAL EXPR = "{ [ g.Module_Admin ].Element_MMBatchList_CSS() }">
+	<script language="JavaScript" src="{ g.clientside_url $ 'Module_Code=' $ encodeattribute( l.module:code ) $ '&Filename=Values_Batchlist.js' }"></script>
+	<MvEVAL EXPR = "{ [ g.Module_Admin ].JavaScript_Set_A_Variable( 'Data_ID', g.Data_ID ) }">
+	<script language="JavaScript">
+		MMScreen_LoadFinished( function() { new ValuesBatchlist( Data_ID ); } );
+	</script>
+
+	<MvEVAL EXPR = "{ [ g.Module_Admin ].Element_MMBatchList_HTML() }">
+	<div id="jsValuesBatchlist"></div>
+</MvFUNCTION>

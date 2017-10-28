@@ -252,8 +252,7 @@ sXX_TGCD_Values
 		</MvIF>
 
 		<MvIF EXPR = "{ g.Tab EQ 'TGCD_Values' }">
-			Values bruh.
-			<MvCOMMENT><MvEVAL EXPR = "{ Data_Values( l.module ) }"></MvCOMMENT>
+			<MvEVAL EXPR = "{ Data_Value( l.module ) }">
 		</MvIF>
 
 		<MvEVAL EXPR = "{ [ g.Module_Admin ].EndContent() }">
@@ -310,6 +309,8 @@ sXX_TGCD_Values
 	<MvIF EXPR = "{ g.Module_Function EQ 'Option_Insert' }">		<MvFUNCTIONRETURN VALUE = "{ JSON_Option_Insert( l.module ) }">		</MvIF>
 	<MvIF EXPR = "{ g.Module_Function EQ 'Option_Update' }">		<MvFUNCTIONRETURN VALUE = "{ JSON_Option_Update( l.module ) }">		</MvIF>
 	<MvIF EXPR = "{ g.Module_Function EQ 'Option_Delete' }">		<MvFUNCTIONRETURN VALUE = "{ JSON_Option_Delete( l.module ) }">		</MvIF>
+
+	<MvIF EXPR = "{ g.Module_Function EQ 'Load_Fields' }">			<MvFUNCTIONRETURN VALUE = "{ JSON_Load_Fields( l.module ) }">		</MvIF>
 </MvFUNCTION>
 
 <MvCOMMENT>
@@ -327,8 +328,13 @@ sXX_TGCD_Values
 		<MvEVAL EXPR = "{ [ g.Module_Clientside ].Module_Content_Type( l.module, 'text/javascript' ) }">
 		<MvINCLUDE INTERPRET = "off" FILE = "js/Fields_Batchlist.js">
 	</MvIF>
+	<MvIF EXPR = "{ g.Filename EQ 'Values_Batchlist.js' }">
+		<MvEVAL EXPR = "{ [ g.Module_Clientside ].Module_Content_Type( l.module, 'text/javascript' ) }">
+		<MvINCLUDE INTERPRET = "off" FILE = "js/Values_Batchlist.js">
+	</MvIF>
 </MvFUNCTION>
 
 <MvINCLUDE FILE = "functions/data.mv">
 <MvINCLUDE FILE = "functions/fields.mv">
 <MvINCLUDE FILE = "functions/options.mv">
+<MvINCLUDE FILE = "functions/values.mv">

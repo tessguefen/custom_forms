@@ -16,6 +16,9 @@
 |	JSON_Option_Update( module var )
 |	JSON_Option_Delete( module var )
 |
+|	OptionList_Update_Offsets( field_id, options var )
+|	OptionList_Update_Offsets_PastEnd( field_id, pastend var, pastend_count )
+|
 |
 </MvCOMMENT>
 

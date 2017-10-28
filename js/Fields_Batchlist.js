@@ -211,7 +211,6 @@ FieldsBatchlist.prototype.onInsert = function( item, callback, delegator ) {
 }
 
 FieldsBatchlist.prototype.onDisplayOrderSave = function( fieldlist, callback ) {
-	console.log( fieldlist );
 	FieldsBatchlist_DisplayOrder( fieldlist, 'Field_DisplayOrder_Update', callback, '' );
 }
 
@@ -317,7 +316,10 @@ Fields_Column_Type.prototype.onDisplayEdit = function( record, item ) {
 	select.options[ select.options.length ] = new Option( 'Checkbox', 'checkbox' );
 	select.options[ select.options.length ] = new Option( 'Text Field', 'text' );
 	select.options[ select.options.length ] = new Option( 'Text Area', 'memo' );
+	select.options[ select.options.length ] = new Option( 'Hidden', 'hidden' );
 	select.options[ select.options.length ] = new Option( 'Image', 'image' );
+	select.options[ select.options.length ] = new Option( 'Email', 'email' );
+	select.options[ select.options.length ] = new Option( 'Date', 'date' );
 
 	for ( i = 0, i_len = select.options.length; i < i_len; i++ )
 	{
@@ -338,7 +340,10 @@ Fields_Column_Type.prototype.onDisplayData = function( record ) {
 	else if ( record.type == 'checkbox' )			text.innerHTML = 'Checkbox';
 	else if ( record.type == 'text' )				text.innerHTML = 'Text Field';
 	else if ( record.type == 'memo' )				text.innerHTML = 'Text Area';
+	else if ( record.type == 'hidden' )				text.innerHTML = 'Hidden';
 	else if ( record.type == 'image' )				text.innerHTML = 'Image';
+	else if ( record.type == 'email' )				text.innerHTML = 'Email';
+	else if ( record.type == 'date' )				text.innerHTML = 'Date';
 
 	return text;
 }
