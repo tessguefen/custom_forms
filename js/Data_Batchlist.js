@@ -30,6 +30,7 @@ function DataBatchlist() {
 	self.Feature_Delete_Enable('Delete Data Set(s)');
 	self.Feature_RowDoubleClick_Enable();
 	self.processingdialog = new ProcessingDialog();
+	self.Feature_GoTo_Enable('Open Data', '');
 }
 
 DeriveFrom( MMBatchList, DataBatchlist );
@@ -67,4 +68,7 @@ DataBatchlist.prototype.onInsert = function( item, callback, delegator ) {
 }
 DataBatchlist.prototype.onDelete = function( item, callback, delegator ) {
 	DataBatchlist_Function( item.record.mmbatchlist_fieldlist, 'Data_Delete', callback, delegator );
+}
+DataBatchlist.prototype.onGoTo = function( item, e ) {
+	return OpenLinkHandler( e, adminurl, { 'Module_Code': 'TGCD', 'Store_Code': Store_Code, 'Screen': 'SUTL', 'Data_ID': item.record.id, 'Module_Type': 'util', 'TGCD_Screen' : 'Data_View' } );
 }

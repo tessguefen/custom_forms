@@ -17,6 +17,7 @@
 |		JSON_Data_Delete( module var )
 |
 |		Data_Tab( module var )
+|		Data_Fields( module var )
 |
 </MvCOMMENT>
 
@@ -180,7 +181,7 @@
 		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
 		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-DATA-0007', g.MvQUERY_Error ) }">
 	</MvIF>
-
+	<MvFUNCTIONRETURN VALUE = 1>
 </MvFUNCTION>
 
 
@@ -211,7 +212,7 @@
 	<MvIF EXPR = "{ NOT [ g.Module_Library_DB ].SQL_Query_Count( l.search_query, l.total_count ) }">
 		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Error(g.Error_Code, g.Error_Message ) }">
 	<MvELSEIF EXPR = "{ NOT [ g.Module_Library_Native_DBAPI ].DB_OPENVIEW_Range('Merchant', 'TGCD_Data', l.search_sql, l.search_fields, g.Offset, g.Count) }">
-		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Error( 'TGCD_Data-JSON-0001', g.MvOPENVIEW_Error ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Error( 'TGCD-Data-JSON-0001', g.MvOPENVIEW_Error ) }">
 	</MvIF>
 
 	<MvASSIGN NAME = "l.count" VALUE = 0>
@@ -288,4 +289,17 @@
 
 	<MvEVAL EXPR = "{ [ g.Module_Admin ].Element_MMBatchList_HTML() }">
 	<div id="jsDataBatchlist"></div>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Data_Fields" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "text, html">
+	<MvEVAL EXPR = "{ [ g.Module_Admin ].Element_MMBatchList_JavaScript() }">
+	<MvEVAL EXPR = "{ [ g.Module_Admin ].Element_MMBatchList_CSS() }">
+	<script language="JavaScript" src="{ g.clientside_url $ 'Module_Code=' $ encodeattribute( l.module:code ) $ '&Filename=Fields_Batchlist.js' }"></script>
+	<MvEVAL EXPR = "{ [ g.Module_Admin ].JavaScript_Set_A_Variable( 'Data_ID', g.Data_ID ) }">
+	<script language="JavaScript">
+		MMScreen_LoadFinished( function() { new FieldsBatchlist( Data_ID ); } );
+	</script>
+
+	<MvEVAL EXPR = "{ [ g.Module_Admin ].Element_MMBatchList_HTML() }">
+	<div id="jsFieldsBatchlist"></div>
 </MvFUNCTION>

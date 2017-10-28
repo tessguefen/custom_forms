@@ -1,0 +1,348 @@
+<MvCOMMENT>
+|
+|	Functions for FIELDS
+|
+|	Field_Read( field var, view )
+|	Field_Insert_LowLevel( field var )
+|	Field_Insert( field var )
+|	Field_Load_ID( id, output var )
+|	Field_Update_LowLevel( field var )
+|	Field_Update( field var )
+|	Field_Delete( field_id )
+|
+|
+</MvCOMMENT>
+
+<MvFUNCTION NAME = "Field_Read" PARAMETERS = "field var, view">
+	<MvASSIGN NAME = "l.field" MEMBER = "id"			VALUE = "{ miva_variable_value( l.view $ '.d.id' ) }">
+	<MvASSIGN NAME = "l.field" MEMBER = "data_id"		VALUE = "{ miva_variable_value( l.view $ '.d.data_id' ) }">
+	<MvASSIGN NAME = "l.field" MEMBER = "code"			VALUE = "{ miva_variable_value( l.view $ '.d.code' ) }">
+	<MvASSIGN NAME = "l.field" MEMBER = "prompt"		VALUE = "{ miva_variable_value( l.view $ '.d.prompt' ) }">
+	<MvASSIGN NAME = "l.field" MEMBER = "type"			VALUE = "{ miva_variable_value( l.view $ '.d.type' ) }">
+	<MvASSIGN NAME = "l.field" MEMBER = "required"		VALUE = "{ miva_variable_value( l.view $ '.d.required' ) }">
+	<MvASSIGN NAME = "l.field" MEMBER = "disp_order"	VALUE = "{ miva_variable_value( l.view $ '.d.disp_order' ) }">
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Field_Insert_LowLevel" PARAMETERS = "field var" STANDARDOUTPUTLEVEL = "">
+	<MvASSIGN NAME = "l.field:id" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Generate( 'TGCD_Fields' ) }">
+
+	<MvQUERY NAME	= "Merchant"
+			 QUERY	= "{ 'INSERT INTO ' $ g.Store_Table_Prefix $ 'TGCD_Fields
+					      ( id, data_id, code, prompt, type, required, disp_order )
+						  VALUES
+						  ( ?, ?, ?, ?, ?, ?, ?  )' }"
+			 FIELDS	= "l.data:id, l.data:data_id, l.data:code, l.data:prompt, l.data:type, l.data:required, l.data:disp_order">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-FIELD-0001', g.MvQUERY_Error ) }">
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Field_Insert" PARAMETERS = "data var" STANDARDOUTPUTLEVEL = "">
+	<MvASSIGN NAME = "l.field:code"			VALUE = "{ trim( l.field:code ) }">
+	<MvASSIGN NAME = "l.field:prompt"		VALUE = "{ trim( l.field:prompt ) }">
+	<MvASSIGN NAME = "l.field:type"			VALUE = "{ trim( l.field:type ) }">
+	<MvASSIGN NAME = "l.field:required"		VALUE = "{ trim( l.field:required ) }">
+	<MvASSIGN NAME = "l.field:disp_order"	VALUE = "{ trim( l.field:disp_order ) }">
+
+	<MvIF EXPR = "{ NOT Data_Load_ID( l.field:data_id, l.data ) }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Invalid Data ID">
+		<MvASSIGN NAME = "g.TGCD_Error:code" VALUE = "data_id">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.field:code }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Code must be present.">
+		<MvASSIGN NAME = "g.TGCD_Error:code" VALUE = "code">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Admin ].Validate_Code( l.field:code ) }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Please enter a Valid Code.">
+		<MvASSIGN NAME = "g.TGCD_Error:code" VALUE = "code">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.field:prompt }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Prompt must be present.">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "prompt">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.field:type }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Type must be selected.">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "type">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.field:required }">
+		<MvASSIGN NAME = "l.field:required" VALUE = "0" />
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.field:disp_order }">
+		<MvASSIGN NAME = "l.field:disp_order" VALUE = "0" />
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ Field_Load_Code( l.field:code, l.code_check ) }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "This code already exist.">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT Field_Insert_LowLevel( l.field ) }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Field_Load_ID" PARAMETERS = "id, output var" STANDARDOUTPUTLEVEL = "">
+	<MvOPENVIEW NAME	= "Merchant"
+				VIEW	= "TGCD_Fields"
+				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCD_Fields WHERE id = ?' }"
+				FIELDS	= "l.id">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Library_Filename_Utilities ].Error( 'TGCD-FIELD-0002', g.MvOPENVIEW_Error ) }">
+	</MvIF>
+
+	<MvIF EXPR = "{ TGCD_Fields.d.EOF }">
+		<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Fields">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_DB ].Error_Load_EOF( 'TGCD-FIELD-0003' ) }">
+	</MvIF>
+
+	<MvEVAL EXPR = "{ Field_Read( l.output, 'TGCD_Fields' ) }">
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Fields">
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Field_Load_Code" PARAMETERS = "code, output var" STANDARDOUTPUTLEVEL = "">
+	<MvOPENVIEW NAME	= "Merchant"
+				VIEW	= "TGCD_Fields"
+				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCD_Fields WHERE code = ?' }"
+				FIELDS	= "l.code">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Library_Filename_Utilities ].Error( 'TGCD-FIELD-0004', g.MvOPENVIEW_Error ) }">
+	</MvIF>
+
+	<MvIF EXPR = "{ TGCD_Fields.d.EOF }">
+		<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Fields">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_DB ].Error_Load_EOF( 'TGCD-FIELD-0005' ) }">
+	</MvIF>
+
+	<MvEVAL EXPR = "{ Field_Read( l.output, 'TGCD_Fields' ) }">
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Fields">
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Field_Update_LowLevel" PARAMETERS = "field var" STANDARDOUTPUTLEVEL = "">
+	<MvQUERY NAME	= "Merchant"
+			 QUERY	= "{ 'UPDATE ' $ g.Store_Table_Prefix $ 'TGCD_Fields
+					      SET
+							code		= ?,
+							prompt		= ?,
+							type		= ?,
+							required	= ?,
+							disp_order	= ?
+					      WHERE
+						    id		= ?' }"
+			 FIELDS	= "l.field:code, l.field:prompt, l.field:type, l.field:required, l.field:disp_order, l.field:id">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-FIELD-0006', g.MvQUERY_Error ) }">
+	</MvIF>
+	
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Field_Update" PARAMETERS = "field var" STANDARDOUTPUTLEVEL = "">
+	<MvIF EXPR = "{ NOT Field_Load_ID( l.field:id, l.prev_field ) }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvASSIGN NAME = "l.field:code"			VALUE = "{ trim( l.field:code ) }">
+	<MvASSIGN NAME = "l.field:prompt"		VALUE = "{ trim( l.field:prompt ) }">
+	<MvASSIGN NAME = "l.field:type"			VALUE = "{ trim( l.field:type ) }">
+	<MvASSIGN NAME = "l.field:required"		VALUE = "{ trim( l.field:required ) }">
+	<MvASSIGN NAME = "l.field:disp_order"	VALUE = "{ trim( l.field:disp_order ) }">
+
+	<MvIF EXPR = "{ ISNULL l.field:code }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Code must be present.">
+		<MvASSIGN NAME = "g.TGCD_Error:code" VALUE = "code">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Admin ].Validate_Code( l.field:code ) }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Please enter a Valid Code.">
+		<MvASSIGN NAME = "g.TGCD_Error:code" VALUE = "code">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.field:prompt }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Prompt must be present.">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "prompt">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.field:type }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Type must be selected.">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "type">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.field:required }">
+		<MvASSIGN NAME = "l.field:required" VALUE = "0" />
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.field:disp_order }">
+		<MvASSIGN NAME = "l.field:disp_order" VALUE = "0" />
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = "{ Field_Update_LowLevel( l.field ) }">
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Field_Delete" PARAMETERS = "field_id" STANDARDOUTPUTLEVEL = "">
+	<MvQUERY NAME	= "Merchant"
+			 QUERY	= "{ 'DELETE FROM ' $ g.Store_Table_Prefix $ 'TGCD_Fields WHERE id = ?' }"
+			 FIELDS	= "l.field_id">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-FIELD-0007', g.MvQUERY_Error ) }">
+	</MvIF>
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvCOMMENT>
+|
+|	Start JSON
+|
+</MvCOMMENT>
+
+<MvFUNCTION NAME = "JSON_Fields_Load_Query" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "text, html, compresswhitespace">
+	<MvASSIGN NAME = "g.Filter" VALUE = "{ trim( g.Filter ) }">
+	<MvASSIGN NAME = "g.Sort" VALUE = "{ trim( g.Sort ) }">
+	<MvASSIGN NAME = "g.Offset" VALUE = "{ trim( g.Offset ) }">
+	<MvASSIGN NAME = "g.Count" VALUE = "{ trim( g.Count ) }">
+	<MvASSIGN NAME = "g.Data_ID" VALUE = "{ trim( g.Data_ID ) }">
+
+	<MvASSIGN NAME = "l.search_query"				VALUE = "">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_SELECT( l.search_query, 'field.id				AS field_id,
+																				 field.data_id			AS field_data_id,
+																				 field.code				AS field_code,
+																				 field.prompt			AS field_prompt,
+																				 field.type				AS field_type,
+																				 field.required			AS field_required,
+																				 field.disp_order		AS field_disp_order,
+																				 opt.id				AS opt_id,
+																				 opt.field_id		AS opt_field_id,
+																				 opt.code			AS opt_code,
+																				 opt.prompt			AS opt_prompt,
+																				 opt.disp_order		AS opt_disp_order' ) }">
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_FROM( l.search_query, g.Store_Table_Prefix $ 'TGCD_Fields', 'field' ) }">
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_LEFT_OUTER_JOIN( l.search_query, 'field', g.Store_Table_Prefix $ 'TGCD_Options', 'opt', 'opt.field_id = field.id', '' ) }">
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_WHERE( l.search_query, 'field.data_id = ?', 'g.data_id' ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Filter( l.search_query, g.Filter,'code:field.code;opt.code,prompt:field.prompt;opt.prompt,type:field.type,required:field.required' ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_OrderBy_Fields( l.search_query, g.Sort,
+																		'code:field.code;opt.code,
+																		prompt:field.prompt;opt.prompt,
+																		type:field.type,
+																		required:field.required',
+																		'field.disp_order;opt.disp_order' ) }">
+																			
+	<MvASSIGN NAME = "l.search_sql"			VALUE = "{ [ g.Module_Library_DB ].SQL_Query_Build( l.search_query, l.search_fields ) }">
+
+	<MvOPENVIEW NAME	= "Merchant"
+				VIEW	= "TGCD_Fields"
+				QUERY	= "{ l.search_sql }"
+				FIELDS	= "{ l.search_fields }">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Error( 'TGCD-FIELD-JSON-0001', g.MvOPENVIEW_Error ) }">
+	</MvIF>
+
+	<MvASSIGN NAME = "l.total_count"		VALUE = 0>
+	<MvASSIGN NAME = "l.field_count"		VALUE = 0>
+	<MvASSIGN NAME = "l.opt_count"		VALUE = 0>
+	<MvASSIGN NAME = "l.last_field_id"	VALUE = 0>
+	<MvASSIGN NAME = "l.last_opt_id"	VALUE = 0>
+
+	<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Response_Start() }">
+	{
+		"data":
+		[
+		<MvWHILE EXPR = "{ NOT TGCD_Fields.d.EOF }">
+			<MvIF EXPR = "{ l.last_field_id NE TGCD_Fields.d.field_id }">
+				<MvIF EXPR = "{ l.opt_count }">
+					<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_End() }">
+					]
+				</MvIF>
+
+				<MvIF EXPR = "{ l.field_count }">
+					<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_End() }">
+				</MvIF>
+
+				<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_Start( l.field_count ) }">
+				"id":			<MvEVAL EXPR = "{ int( TGCD_Fields.d.field_id ) }">,
+				"data_id":		<MvEVAL EXPR = "{ int( TGCD_Fields.d.field_data_id ) }">,
+				"code":			"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCD_Fields.d.field_code ) }">",
+				"disp_order":	<MvEVAL EXPR = "{ int( TGCD_Fields.d.field_disp_order ) }">,
+				"prompt":		"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCD_Fields.d.field_prompt ) }">",
+				"type":			"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCD_Fields.d.field_type ) }">",
+				"required":		<MvEVAL EXPR = "{ int( TGCD_Fields.d.field_required ) }">
+				
+				<MvASSIGN NAME = "l.total_count"		VALUE = "{ l.total_count + 1 }">
+				<MvASSIGN NAME = "l.last_field_id"	VALUE = "{ TGCD_Fields.d.field_id }">
+				<MvASSIGN NAME = "l.last_opt_id"	VALUE = 0>
+				<MvASSIGN NAME = "l.opt_count"		VALUE = 0>
+			</MvIF>
+
+			<MvIF EXPR = "{ l.last_opt_id NE TGCD_Fields.d.opt_id AND NOT ISNULL TGCD_Fields.d.opt_id }">
+				<MvIF EXPR = "{ l.opt_count }">
+					<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_End() }">
+				</MvIF>
+
+				<MvIF EXPR = "{ NOT l.opt_count }">
+					, "options":
+					[
+				</MvIF>
+
+				<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_Start( l.opt_count ) }">
+				"id":			<MvEVAL EXPR = "{ int( TGCD_Fields.d.opt_id ) }">,
+				"field_id":		<MvEVAL EXPR = "{ int( TGCD_Fields.d.opt_field_id ) }">,
+				"disp_order":	<MvEVAL EXPR = "{ int( TGCD_Fields.d.opt_disp_order ) }">,
+				"code":			"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCD_Fields.d.opt_code ) }">",
+				"prompt":		"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCD_Fields.d.opt_prompt ) }">"
+
+				<MvASSIGN NAME = "l.total_count"		VALUE = "{ l.total_count + 1 }">
+				<MvASSIGN NAME = "l.last_opt_id"	VALUE = "{ TGCD_Fields.d.opt_id }">
+			</MvIF>
+
+			<MvSKIP NAME = "Merchant" VIEW = "TGCD_Fields" ROWS = 1>
+		</MvWHILE>
+
+		<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Fields">
+
+		<MvIF EXPR = "{ l.opt_count }">
+			<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_End() }">
+			]
+		</MvIF>
+
+		<MvIF EXPR = "{ l.field_count }">
+			<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_End() }">
+		</MvIF>
+		],
+		"start_offset": 0,
+		"total_count": <MvEVAL EXPR = "{ int( l.total_count ) }">
+	}
+}
+</MvFUNCTION>

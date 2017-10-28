@@ -220,27 +220,49 @@ sXX_TGCD_Values
 <MvFUNCTION NAME = "StoreUtilityModule_Screen" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "text, html, compresswhitespace">
 	<MvIF EXPR = "{ ISNULL g.Admin_Open_Store }">							<MvFUNCTIONRETURN VALUE = 1>	</MvIF>
 
-	<MvEVAL EXPR = "{ [ g.Module_Admin ].BeginScreen_Start( 'Custom Data', '', '' ) }">
+	<MvIF EXPR = "{ g.TGCD_Screen EQ 'Data_View' }">
+		<MvASSIGN NAME = "l.void" VALUE = "{ Data_Load_ID( g.Data_ID, l.data ) }">
+		<MvEVAL EXPR = "{ [ g.Module_Admin ].BeginScreen_Start( 'Data: ' $ l.data:name, '', '' ) }">
 
-	<MvEVAL EXPR = "{ [ g.Module_Admin ].Element_AdminUI_CSS() }">
+		<MvEVAL EXPR = "{ [ g.Module_Admin ].Element_AdminUI_CSS() }">
 
-	<MvEVAL EXPR = "{ [ g.Module_Admin ].BeginScreen_End( 'Custom Data', '', '' ) }">
-	<MvEVAL EXPR = "{ [ g.Module_Admin ].BeginContent() }">
-	<MvEVAL EXPR = "{ [ g.Module_Admin ].DrawTabs( 'TGCD', 'TGCD_Data:Custom Data,TGCD_Values:Custom Values' ) }">
+		<MvEVAL EXPR = "{ [ g.Module_Admin ].BeginScreen_End( 'Data: ' $ l.data:name, '', '' ) }">
+		<MvEVAL EXPR = "{ [ g.Module_Admin ].BeginContent() }">
+		<MvEVAL EXPR = "{ [ g.Module_Admin ].DrawTabs( 'TGCD', 'TGCD_Fields:Fields,TGCD_Values:Values' ) }">
 
-	<MvHIDE FIELDS = "g.Module_Code">
+		<MvHIDE FIELDS = "g.Data_ID,g.TGCD_Screen,g.Module_Code">
 
-	<MvIF EXPR = "{ g.Tab EQ 'TGCD_Data' }">
-		<MvEVAL EXPR = "{ Data_Tab( l.module ) }">
+		<MvIF EXPR = "{ g.Tab EQ 'TGCD_Fields' }">
+			<MvEVAL EXPR = "{ Data_Fields( l.module ) }">
+		</MvIF>
+
+		<MvIF EXPR = "{ g.Tab EQ 'TGCD_Values' }">
+			Values bruh.
+			<MvCOMMENT><MvEVAL EXPR = "{ Data_Values( l.module ) }"></MvCOMMENT>
+		</MvIF>
+
+		<MvEVAL EXPR = "{ [ g.Module_Admin ].EndContent() }">
+		<MvEVAL EXPR = "{ [ g.Module_Admin ].DrawButtons( '' ) }">
+		<MvEVAL EXPR = "{ [ g.Module_Admin ].EndScreen() }">
+	<MvELSE>
+		<MvEVAL EXPR = "{ [ g.Module_Admin ].BeginScreen_Start( 'Custom Data', '', '' ) }">
+
+		<MvEVAL EXPR = "{ [ g.Module_Admin ].Element_AdminUI_CSS() }">
+
+		<MvEVAL EXPR = "{ [ g.Module_Admin ].BeginScreen_End( 'Custom Data', '', '' ) }">
+		<MvEVAL EXPR = "{ [ g.Module_Admin ].BeginContent() }">
+		<MvEVAL EXPR = "{ [ g.Module_Admin ].DrawTabs( 'TGCD', 'TGCD_Data:Custom Data' ) }">
+
+		<MvHIDE FIELDS = "g.Module_Code">
+
+		<MvIF EXPR = "{ g.Tab EQ 'TGCD_Data' }">
+			<MvEVAL EXPR = "{ Data_Tab( l.module ) }">
+		</MvIF>
+
+		<MvEVAL EXPR = "{ [ g.Module_Admin ].EndContent() }">
+		<MvEVAL EXPR = "{ [ g.Module_Admin ].DrawButtons( '' ) }">
+		<MvEVAL EXPR = "{ [ g.Module_Admin ].EndScreen() }">
 	</MvIF>
-
-	<MvIF EXPR = "{ g.Tab EQ 'TGCD_Values' }">
-		Values
-	</MvIF>
-
-	<MvEVAL EXPR = "{ [ g.Module_Admin ].EndContent() }">
-	<MvEVAL EXPR = "{ [ g.Module_Admin ].DrawButtons( '' ) }">
-	<MvEVAL EXPR = "{ [ g.Module_Admin ].EndScreen() }">
 
 	<MvFUNCTIONRETURN VALUE = 1>
 </MvFUNCTION>
@@ -259,10 +281,11 @@ sXX_TGCD_Values
 
 <MvFUNCTION NAME = "Module_JSON" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "">
 	<MvIF EXPR = "{ NOT g.Admin_Open_Store }"><MvFUNCTIONRETURN></MvIF>
-	<MvIF EXPR = "{ g.Module_Function EQ 'Data_Load_Query'}">	<MvFUNCTIONRETURN VALUE = "{ JSON_Data_Load_Query( l.module ) }">	</MvIF>
-	<MvIF EXPR = "{ g.Module_Function EQ 'Data_Update'}">		<MvFUNCTIONRETURN VALUE = "{ JSON_Data_Update( l.module ) }">		</MvIF>
-	<MvIF EXPR = "{ g.Module_Function EQ 'Data_Insert'}">		<MvFUNCTIONRETURN VALUE = "{ JSON_Data_Insert( l.module ) }">		</MvIF>
-	<MvIF EXPR = "{ g.Module_Function EQ 'Data_Delete'}">		<MvFUNCTIONRETURN VALUE = "{ JSON_Data_Delete( l.module ) }">		</MvIF>
+	<MvIF EXPR = "{ g.Module_Function EQ 'Data_Load_Query'}">		<MvFUNCTIONRETURN VALUE = "{ JSON_Data_Load_Query( l.module ) }">	</MvIF>
+	<MvIF EXPR = "{ g.Module_Function EQ 'Data_Update'}">			<MvFUNCTIONRETURN VALUE = "{ JSON_Data_Update( l.module ) }">		</MvIF>
+	<MvIF EXPR = "{ g.Module_Function EQ 'Data_Insert'}">			<MvFUNCTIONRETURN VALUE = "{ JSON_Data_Insert( l.module ) }">		</MvIF>
+	<MvIF EXPR = "{ g.Module_Function EQ 'Data_Delete'}">			<MvFUNCTIONRETURN VALUE = "{ JSON_Data_Delete( l.module ) }">		</MvIF>
+	<MvIF EXPR = "{ g.Module_Function EQ 'Fields_Load_Query' }">	<MvFUNCTIONRETURN VALUE = "{ JSON_Fields_Load_Query( l.module ) }">	</MvIF>
 </MvFUNCTION>
 
 <MvCOMMENT>
@@ -276,6 +299,11 @@ sXX_TGCD_Values
 		<MvEVAL EXPR = "{ [ g.Module_Clientside ].Module_Content_Type( l.module, 'text/javascript' ) }">
 		<MvINCLUDE INTERPRET = "off" FILE = "js/Data_Batchlist.js">
 	</MvIF>
+	<MvIF EXPR = "{ g.Filename EQ 'Fields_Batchlist.js' }">
+		<MvEVAL EXPR = "{ [ g.Module_Clientside ].Module_Content_Type( l.module, 'text/javascript' ) }">
+		<MvINCLUDE INTERPRET = "off" FILE = "js/Fields_Batchlist.js">
+	</MvIF>
 </MvFUNCTION>
 
 <MvINCLUDE FILE = "functions/data.mv">
+<MvINCLUDE FILE = "functions/fields.mv">
