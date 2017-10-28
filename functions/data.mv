@@ -1,0 +1,291 @@
+<MvCOMMENT>
+|
+|	Functions for DATA
+|	
+|		Data_Read( data var, view )
+|		Data_Insert_LowLevel( data var )
+|		Data_Insert( data var )
+|		Data_Load_ID( id, output var )
+|		Data_Load_Code( code, output var )
+|		Data_Update_LowLevel( data var )
+|		Data_Update( data var )
+|		Data_Delete( data_id )
+|
+|		JSON_Data_Load_Query( module var )
+|		JSON_Data_Insert( module var )
+|		JSON_Data_Update( module var )
+|		JSON_Data_Delete( module var )
+|
+|		Data_Tab( module var )
+|
+</MvCOMMENT>
+
+<MvFUNCTION NAME = "Data_Read" PARAMETERS = "data var, view">
+	<MvASSIGN NAME = "l.data" MEMBER = "id"		VALUE = "{ miva_variable_value( l.view $ '.d.id' ) }">
+	<MvASSIGN NAME = "l.data" MEMBER = "code"	VALUE = "{ miva_variable_value( l.view $ '.d.code' ) }">
+	<MvASSIGN NAME = "l.data" MEMBER = "name"	VALUE = "{ miva_variable_value( l.view $ '.d.name' ) }">
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Data_Insert_LowLevel" PARAMETERS = "data var" STANDARDOUTPUTLEVEL = "">
+	<MvASSIGN NAME = "l.data:id" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Generate( 'TGCD_Data' ) }">
+
+	<MvQUERY NAME	= "Merchant"
+			 QUERY	= "{ 'INSERT INTO ' $ g.Store_Table_Prefix $ 'TGCD_Data
+					      ( id, code, name )
+						  VALUES
+						  ( ?, ?, ? )' }"
+			 FIELDS	= "l.data:id, l.data:code, l.data:name">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-DATA-0001', g.MvQUERY_Error ) }">
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Data_Insert" PARAMETERS = "data var" STANDARDOUTPUTLEVEL = "">
+	<MvASSIGN NAME = "l.data:code" VALUE = "{ trim( l.data:code ) }">
+	<MvASSIGN NAME = "l.data:name" VALUE = "{ trim( l.data:name ) }">
+
+	<MvIF EXPR = "{ ISNULL l.data:code }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Code must be present.">
+		<MvASSIGN NAME = "g.TGCD_Error:code" VALUE = "code">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Admin ].Validate_Code( l.data:code ) }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Please enter a Valid Code.">
+		<MvASSIGN NAME = "g.TGCD_Error:code" VALUE = "code">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.data:name }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Name must be present.">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "name">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ Data_Load_Code( l.data:code, l.code_check ) }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "This code already exist.">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT Data_Insert_LowLevel( l.data ) }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Data_Load_ID" PARAMETERS = "id, output var" STANDARDOUTPUTLEVEL = "">
+	<MvOPENVIEW NAME	= "Merchant"
+				VIEW	= "TGCD_Data"
+				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCD_Data WHERE id = ?' }"
+				FIELDS	= "l.id">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Library_Filename_Utilities ].Error( 'TGCD-DATA-0002', g.MvOPENVIEW_Error ) }">
+	</MvIF>
+
+	<MvIF EXPR = "{ TGCD_Data.d.EOF }">
+		<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Data">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_DB ].Error_Load_EOF( 'TGCD-DATA-0003' ) }">
+	</MvIF>
+
+	<MvEVAL EXPR = "{ Data_Read( l.output, 'TGCD_Data' ) }">
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Data">
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Data_Load_Code" PARAMETERS = "code, output var" STANDARDOUTPUTLEVEL = "">
+	<MvOPENVIEW NAME	= "Merchant"
+				VIEW	= "TGCD_Data"
+				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCD_Data WHERE code = ?' }"
+				FIELDS	= "l.code">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Library_Filename_Utilities ].Error( 'TGCD-DATA-0004', g.MvOPENVIEW_Error ) }">
+	</MvIF>
+
+	<MvIF EXPR = "{ TGCD_Data.d.EOF }">
+		<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Data">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_DB ].Error_Load_EOF( 'TGCD-DATA-0005' ) }">
+	</MvIF>
+
+	<MvEVAL EXPR = "{ Data_Read( l.output, 'TGCD_Data' ) }">
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Data">
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Data_Update_LowLevel" PARAMETERS = "data var" STANDARDOUTPUTLEVEL = "">
+	<MvQUERY NAME	= "Merchant"
+			 QUERY	= "{ 'UPDATE ' $ g.Store_Table_Prefix $ 'TGCD_Data
+					      SET
+							code	= ?,
+							name	= ?
+					      WHERE
+						    id		= ?' }"
+			 FIELDS	= "l.data:code, l.data:name, l.data:id">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-DATA-0006', g.MvQUERY_Error ) }">
+	</MvIF>
+	
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Data_Update" PARAMETERS = "data var" STANDARDOUTPUTLEVEL = "">
+	<MvIF EXPR = "{ NOT Data_Load_ID( l.data:id, l.prev_data ) }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvASSIGN NAME = "l.data:code" VALUE = "{ trim( l.data:code ) }">
+	<MvASSIGN NAME = "l.data:name" VALUE = "{ trim( l.data:name ) }">
+
+	<MvIF EXPR = "{ ISNULL l.data:code }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Code must be present.">
+		<MvASSIGN NAME = "g.TGCD_Error:code" VALUE = "code">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Admin ].Validate_Code( l.data:code ) }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Please enter a Valid Code.">
+		<MvASSIGN NAME = "g.TGCD_Error:code" VALUE = "code">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.data:name }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Name must be present.">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "name">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ l.data:code NE l.prev_data:code }">
+		<MvIF EXPR = "{ Data_Load_Code( l.data:code, l.code_check ) }">
+			<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "This code already exist.">
+			<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
+			<MvFUNCTIONRETURN VALUE = 0>
+		</MvIF>
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = "{ Data_Update_LowLevel( l.data ) }">
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Data_Delete" PARAMETERS = "data_id" STANDARDOUTPUTLEVEL = "">
+	<MvQUERY NAME	= "Merchant"
+			 QUERY	= "{ 'DELETE FROM ' $ g.Store_Table_Prefix $ 'TGCD_Data WHERE id = ?' }"
+			 FIELDS	= "l.data_id">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-DATA-0007', g.MvQUERY_Error ) }">
+	</MvIF>
+
+</MvFUNCTION>
+
+
+<MvCOMMENT>
+|
+|	Start JSON
+|
+</MvCOMMENT>
+
+
+<MvFUNCTION NAME = "JSON_Data_Load_Query" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "text, html, compresswhitespace">
+	<MvASSIGN NAME = "g.Filter"			VALUE = "{ trim( g.Filter ) }">
+	<MvASSIGN NAME = "g.Sort"			VALUE = "{ trim( g.Sort ) }">
+	<MvASSIGN NAME = "g.Offset"			VALUE = "{ trim( g.Offset ) }">
+	<MvASSIGN NAME = "g.Count"			VALUE = "{ trim( g.Count ) }">
+	<MvASSIGN NAME = "l.search_query"	VALUE = "">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_SELECT( l.search_query,'s.*' ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_FROM( l.search_query, g.Store_Table_Prefix $ 'TGCD_Data', 's' ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Filter( l.search_query, g.Filter,'id:s.id,code:s.code,name:s.name' ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_OrderBy_Fields(l.search_query, g.Sort, 'id:s.id,code:s.code,name:s.name', 's.id' ) }">
+
+	<MvASSIGN NAME = "l.search_sql" VALUE = "{ [ g.Module_Library_DB].SQL_Query_Build( l.search_query, l.search_fields ) }">
+
+	<MvIF EXPR = "{ NOT [ g.Module_Library_DB ].SQL_Query_Count( l.search_query, l.total_count ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Error(g.Error_Code, g.Error_Message ) }">
+	<MvELSEIF EXPR = "{ NOT [ g.Module_Library_Native_DBAPI ].DB_OPENVIEW_Range('Merchant', 'TGCD_Data', l.search_sql, l.search_fields, g.Offset, g.Count) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Error( 'TGCD_Data-JSON-0001', g.MvOPENVIEW_Error ) }">
+	</MvIF>
+
+	<MvASSIGN NAME = "l.count" VALUE = 0>
+
+	<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Response_Start() }">
+		{
+			"data":
+				[
+					<MvWHILE EXPR = "{ ( NOT TGCD_Data.d.EOF ) AND ( ( g.Count EQ 0 ) OR (l.count LT g.Count ) ) }">
+					<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_Start( l.count )}">
+					"id": <MvEVAL EXPR = "{ int( TGCD_Data.d.id ) }">,
+					"code" : "<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCD_Data.d.code ) }">",
+					"name" : "<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCD_Data.d.name ) }">"
+					<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_End() }">
+					<MvSKIP NAME = "Merchant" VIEW = "TGCD_Data" ROWS = 1>
+					</MvWHILE>
+				],
+
+			"total_count": <MvEVAL EXPR = "{ int( l.total_count ) }">,
+			"start_offset": <MvEVAL EXPR = "{ int( g.Offset ) }">
+		}
+		<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Data">
+	}
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "JSON_Data_Insert" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "">
+	<MvASSIGN NAME = "l.data:code"	VALUE = "{ g.Code }">
+	<MvASSIGN NAME = "l.data:name"	VALUE = "{ g.Name }">
+
+	<MvIF EXPR = "{ NOT Data_Insert( l.data ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_FieldError( g.TGCD_Error:name, g.TGCD_Error:message ) }">
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Success() }">
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "JSON_Data_Update" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "">
+	<MvASSIGN NAME = "l.data:id"	VALUE = "{ g.Id }">
+	<MvASSIGN NAME = "l.data:code"	VALUE = "{ g.Code }">
+	<MvASSIGN NAME = "l.data:name"	VALUE = "{ g.Name }">
+
+	<MvIF EXPR = "{ NOT Data_Update( l.data ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_FieldError( g.TGCD_Error:name, g.TGCD_Error:message ) }">
+	</MvIF>
+	
+	<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Success() }">
+</MvFUNCTION>
+
+
+<MvFUNCTION NAME = "JSON_Data_Delete" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "">
+	<MvIF EXPR = "{ NOT Data_Delete( g.Id ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_FieldError( g.TGCD_Error:name, g.TGCD_Error:message ) }">
+	</MvIF>
+	
+	<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Success() }">
+</MvFUNCTION>
+
+
+
+<MvCOMMENT>
+|
+|	Admin UI
+|
+</MvCOMMENT>
+
+
+<MvFUNCTION NAME = "Data_Tab" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "text, html">
+	<MvEVAL EXPR = "{ [ g.Module_Admin ].Element_MMBatchList_JavaScript() }">
+	<MvEVAL EXPR = "{ [ g.Module_Admin ].Element_MMBatchList_CSS() }">
+	<script language="JavaScript" src="{ g.clientside_url $ 'Module_Code=' $ encodeattribute( l.module:code ) $ '&Filename=Data_Batchlist.js' }"></script>
+	<script language="JavaScript">
+		MMScreen_LoadFinished( function() { new DataBatchlist(); } );
+	</script>
+
+	<MvEVAL EXPR = "{ [ g.Module_Admin ].Element_MMBatchList_HTML() }">
+	<div id="jsDataBatchlist"></div>
+</MvFUNCTION>
