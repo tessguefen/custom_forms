@@ -8,24 +8,225 @@
 </MvCOMMENT>
 
 <MvFUNCTION NAME = "Option_Read" PARAMETERS = "option var, view" STANDARDOUTPUTLEVEL = "">
-	<MvASSIGN NAME = "l.field" MEMBER = "id"			VALUE = "{ miva_variable_value( l.view $ '.d.id' ) }">
-	<MvASSIGN NAME = "l.field" MEMBER = "field_id"		VALUE = "{ miva_variable_value( l.view $ '.d.field_id' ) }">
-	<MvASSIGN NAME = "l.field" MEMBER = "code"			VALUE = "{ miva_variable_value( l.view $ '.d.code' ) }">
-	<MvASSIGN NAME = "l.field" MEMBER = "disp_order"	VALUE = "{ miva_variable_value( l.view $ '.d.disp_order' ) }">
+	<MvASSIGN NAME = "l.option" MEMBER = "id"			VALUE = "{ miva_variable_value( l.view $ '.d.id' ) }">
+	<MvASSIGN NAME = "l.option" MEMBER = "field_id"		VALUE = "{ miva_variable_value( l.view $ '.d.field_id' ) }">
+	<MvASSIGN NAME = "l.option" MEMBER = "code"			VALUE = "{ miva_variable_value( l.view $ '.d.code' ) }">
+	<MvASSIGN NAME = "l.option" MEMBER = "disp_order"	VALUE = "{ miva_variable_value( l.view $ '.d.disp_order' ) }">
 </MvFUNCTION>
 
 <MvFUNCTION NAME = "Option_Insert_LowLevel" PARAMETERS = "option var" STANDARDOUTPUTLEVEL = "">
-	<MvASSIGN NAME = "l.field:id" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Generate( 'TGCD_Fields' ) }">
+	<MvASSIGN NAME = "l.option:id" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Generate( 'TGCD_Options' ) }">
 
 	<MvQUERY NAME	= "Merchant"
-			 QUERY	= "{ 'INSERT INTO ' $ g.Store_Table_Prefix $ 'TGCD_Fields
-					      ( id, field_id , code, prompt, disp_order )
+			 QUERY	= "{ 'INSERT INTO ' $ g.Store_Table_Prefix $ 'TGCD_Options
+					      ( id, field_id, code, prompt, disp_order )
 						  VALUES
 						  ( ?, ?, ?, ?, ?  )' }"
-			 FIELDS	= "l.field:id, l.field:data_id, l.field:code, l.field:prompt, l.field:type, l.field:required, l.field:disp_order">
+			 FIELDS	= "l.option:id, l.option:field_id, l.option:code, l.option:prompt, l.option:disp_order">
 	<MvIF EXPR = "{ g.MvQUERY_Error }">
-		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-FIELD-0001', g.MvQUERY_Error ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-OPTION-0001', g.MvQUERY_Error ) }">
 	</MvIF>
 
 	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Option_Insert" PARAMETERS = "option var" STANDARDOUTPUTLEVEL = "">
+	<MvASSIGN NAME = "l.option:code"			VALUE = "{ trim( l.option:code ) }">
+	<MvASSIGN NAME = "l.option:prompt"		VALUE = "{ trim( l.option:prompt ) }">
+	<MvASSIGN NAME = "l.option:disp_order"	VALUE = "{ trim( l.option:disp_order ) }">
+
+	<MvIF EXPR = "{ NOT Field_Load_ID( l.option:field_id, l.data ) }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Invalid Field ID">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "field_id">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.option:code }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Code must be present.">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Admin ].Validate_Code( l.option:code ) }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Please enter a Valid Code.">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.option:prompt }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Prompt must be present.">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "prompt">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.option:disp_order }">
+		<MvASSIGN NAME = "l.option:disp_order" VALUE = "0" />
+	</MvIF>
+
+	<MvIF EXPR = "{ Option_Load_Code( l.option:code, l.code_check ) }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "This code already exist.">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT Option_Insert_LowLevel( l.option ) }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Option_Load_ID" PARAMETERS = "id, output var" STANDARDOUTPUTLEVEL = "">
+	<MvOPENVIEW NAME	= "Merchant"
+				VIEW	= "TGCD_Options"
+				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCD_Options WHERE id = ?' }"
+				FIELDS	= "l.id">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-OPTION-0002', g.MvOPENVIEW_Error ) }">
+	</MvIF>
+
+	<MvIF EXPR = "{ TGCD_Options.d.EOF }">
+		<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Options">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_DB ].Error_Load_EOF( 'TGCD-OPTION-0003' ) }">
+	</MvIF>
+
+	<MvEVAL EXPR = "{ Field_Read( l.output, 'TGCD_Options' ) }">
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Options">
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Option_Load_Code" PARAMETERS = "code, output var" STANDARDOUTPUTLEVEL = "">
+	<MvOPENVIEW NAME	= "Merchant"
+				VIEW	= "TGCD_Options"
+				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCD_Options WHERE code = ?' }"
+				FIELDS	= "l.code">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-OPTION-0004', g.MvOPENVIEW_Error ) }">
+	</MvIF>
+
+	<MvIF EXPR = "{ TGCD_Options.d.EOF }">
+		<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Options">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_DB ].Error_Load_EOF( 'TGCD-OPTION-0005' ) }">
+	</MvIF>
+
+	<MvEVAL EXPR = "{ Field_Read( l.output, 'TGCD_Options' ) }">
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Options">
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Option_Update_LowLevel" PARAMETERS = "option var" STANDARDOUTPUTLEVEL = "">
+	<MvQUERY NAME	= "Merchant"
+			 QUERY	= "{ 'UPDATE ' $ g.Store_Table_Prefix $ 'TGCD_Options
+					      SET
+							code		= ?,
+							prompt		= ?,
+							disp_order	= ?
+					      WHERE
+						    id		= ?' }"
+			 FIELDS	= "l.option:code, l.option:prompt, l.option:disp_order, l.option:id">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-OPTION-0006', g.MvQUERY_Error ) }">
+	</MvIF>
+	
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Option_Update" PARAMETERS = "option var" STANDARDOUTPUTLEVEL = "">
+	<MvIF EXPR = "{ NOT Option_Load_ID( l.option:id, l.prev_option ) }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvASSIGN NAME = "l.option:code"		VALUE = "{ trim( l.option:code ) }">
+	<MvASSIGN NAME = "l.option:prompt"		VALUE = "{ trim( l.option:prompt ) }">
+	<MvASSIGN NAME = "l.option:disp_order"	VALUE = "{ trim( l.option:disp_order ) }">
+
+	<MvIF EXPR = "{ ISNULL l.option:code }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Code must be present.">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Admin ].Validate_Code( l.option:code ) }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Please enter a Valid Code.">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.option:prompt }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Prompt must be present.">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "prompt">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.option:disp_order }">
+		<MvASSIGN NAME = "l.option:disp_order" VALUE = "0" />
+	</MvIF>
+
+	<MvIF EXPR = "{ l.option:code NE l.prev_option:code }">
+		<MvIF EXPR = "{ Option_Load_Code( l.data:code, l.code_check ) AND ( l.code_check:field_id EQ l.option:field_id ) }">
+			<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "This code already exist.">
+			<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
+			<MvFUNCTIONRETURN VALUE = 0>
+		</MvIF>
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = "{ Option_Update_LowLevel( l.option ) }">
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Option_Delete" PARAMETERS = "option_id" STANDARDOUTPUTLEVEL = "">
+	<MvQUERY NAME	= "Merchant"
+			 QUERY	= "{ 'DELETE FROM ' $ g.Store_Table_Prefix $ 'TGCD_Options WHERE id = ?' }"
+			 FIELDS	= "l.option_id">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-OPTION-0007', g.MvQUERY_Error ) }">
+	</MvIF>
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvCOMMENT>
+|
+|	Start JSON
+|
+</MvCOMMENT>
+
+<MvFUNCTION NAME = "JSON_Option_Insert" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "">
+	<MvASSIGN NAME = "l.option:field_id"	VALUE = "{ g.Field_ID }">
+	<MvASSIGN NAME = "l.option:code"		VALUE = "{ g.Code }">
+	<MvASSIGN NAME = "l.option:prompt"		VALUE = "{ g.Prompt }">
+	<MvASSIGN NAME = "l.option:disp_order"	VALUE = "{ g.Disp_Order }">
+
+	<MvIF EXPR = "{ NOT Option_Insert( l.option ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_FieldError( g.TGCD_Error:name, g.TGCD_Error:message ) }">
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Success() }">
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "JSON_Option_Update" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "">
+	<MvASSIGN NAME = "l.option:id"			VALUE = "{ g.ID }">
+	<MvASSIGN NAME = "l.option:field_id"	VALUE = "{ g.Field_ID }">
+	<MvASSIGN NAME = "l.option:code"		VALUE = "{ g.Code }">
+	<MvASSIGN NAME = "l.option:prompt"		VALUE = "{ g.Prompt }">
+	<MvASSIGN NAME = "l.option:disp_order"	VALUE = "{ g.Disp_Order }">
+
+	<MvIF EXPR = "{ NOT Option_Update( l.option ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_FieldError( g.TGCD_Error:name, g.TGCD_Error:message ) }">
+	</MvIF>
+	
+	<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Success() }">
+</MvFUNCTION>
+
+
+<MvFUNCTION NAME = "JSON_Option_Delete" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "">
+	<MvIF EXPR = "{ NOT Option_Delete( g.ID ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_FieldError( g.TGCD_Error:name, g.TGCD_Error:message ) }">
+	</MvIF>
+	
+	<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Success() }">
 </MvFUNCTION>

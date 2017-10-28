@@ -83,12 +83,10 @@
 
 	<MvIF EXPR = "{ ISNULL l.field:required }">
 		<MvASSIGN NAME = "l.field:required" VALUE = "0" />
-		<MvFUNCTIONRETURN VALUE = 0>
 	</MvIF>
 
 	<MvIF EXPR = "{ ISNULL l.field:disp_order }">
 		<MvASSIGN NAME = "l.field:disp_order" VALUE = "0" />
-		<MvFUNCTIONRETURN VALUE = 0>
 	</MvIF>
 
 	<MvIF EXPR = "{ Field_Load_Code( l.field:code, l.code_check ) }">
@@ -202,12 +200,18 @@
 
 	<MvIF EXPR = "{ ISNULL l.field:required }">
 		<MvASSIGN NAME = "l.field:required" VALUE = "0" />
-		<MvFUNCTIONRETURN VALUE = 0>
 	</MvIF>
 
 	<MvIF EXPR = "{ ISNULL l.field:disp_order }">
 		<MvASSIGN NAME = "l.field:disp_order" VALUE = "0" />
-		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ l.field:code NE l.prev_field:code }">
+		<MvIF EXPR = "{ Field_Load_Code( l.data:code, l.code_check ) AND ( l.code_check:data_id EQ l.field:data_id ) }">
+			<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "This code already exist.">
+			<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
+			<MvFUNCTIONRETURN VALUE = 0>
+		</MvIF>
 	</MvIF>
 
 	<MvFUNCTIONRETURN VALUE = "{ Field_Update_LowLevel( l.field ) }">
