@@ -49,13 +49,13 @@
 
 	<MvIF EXPR = "{ ISNULL l.data:code }">
 		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Code must be present.">
-		<MvASSIGN NAME = "g.TGCD_Error:code" VALUE = "code">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
 		<MvFUNCTIONRETURN VALUE = 0>
 	</MvIF>
 
 	<MvIF EXPR = "{ NOT [ g.Module_Admin ].Validate_Code( l.data:code ) }">
 		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Please enter a Valid Code.">
-		<MvASSIGN NAME = "g.TGCD_Error:code" VALUE = "code">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
 		<MvFUNCTIONRETURN VALUE = 0>
 	</MvIF>
 
@@ -85,7 +85,7 @@
 				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCD_Data WHERE id = ?' }"
 				FIELDS	= "l.id">
 	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
-		<MvFUNCTIONRETURN VALUE = "{ [ g.Library_Filename_Utilities ].Error( 'TGCD-DATA-0002', g.MvOPENVIEW_Error ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-DATA-0002', g.MvOPENVIEW_Error ) }">
 	</MvIF>
 
 	<MvIF EXPR = "{ TGCD_Data.d.EOF }">
@@ -105,7 +105,7 @@
 				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCD_Data WHERE code = ?' }"
 				FIELDS	= "l.code">
 	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
-		<MvFUNCTIONRETURN VALUE = "{ [ g.Library_Filename_Utilities ].Error( 'TGCD-DATA-0004', g.MvOPENVIEW_Error ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-DATA-0004', g.MvOPENVIEW_Error ) }">
 	</MvIF>
 
 	<MvIF EXPR = "{ TGCD_Data.d.EOF }">
@@ -145,13 +145,13 @@
 
 	<MvIF EXPR = "{ ISNULL l.data:code }">
 		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Code must be present.">
-		<MvASSIGN NAME = "g.TGCD_Error:code" VALUE = "code">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
 		<MvFUNCTIONRETURN VALUE = 0>
 	</MvIF>
 
 	<MvIF EXPR = "{ NOT [ g.Module_Admin ].Validate_Code( l.data:code ) }">
 		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Please enter a Valid Code.">
-		<MvASSIGN NAME = "g.TGCD_Error:code" VALUE = "code">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
 		<MvFUNCTIONRETURN VALUE = 0>
 	</MvIF>
 

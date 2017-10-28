@@ -21,6 +21,17 @@ function FieldsBatchlist_Function( fieldlist, _function, callback, delegator ) {
 									   delegator );
 }
 
+function FieldsBatchlist_Option_Function( parentlist, fieldlist, _function, callback, delegator ) { 
+	return AJAX_Call_Module_FieldList( callback,
+									   'admin',
+									   'TGCD',
+									   _function,
+									   'Field_ID=' + parentlist.id +
+									   '&Data_ID=' + parentlist.data_id,
+									   fieldlist,
+									   delegator );
+}
+
 function FieldsBatchlist( data_id ) {
 	var self = this;
 	self.data_id = data_id;
@@ -152,14 +163,10 @@ FieldsBatchlist.prototype.onSave = function( item, callback, delegator ) {
 			original_callback( response );
 		}
 	}
-	Fields_Update( item.record.id, item.record.mmbatchlist_fieldlist, callback, delegator );
-}
-// On Delete
-FieldsBatchlist.prototype.onDelete = function( item, callback, delegator ) {
-	FieldsBatchlist_Delete( item.record.id, callback, delegator );
+	FieldsBatchlist_Function( item.record.mmbatchlist_fieldlist, 'Field_Update', callback, delegator );
 }
 
-// On Create
+
 FieldsBatchlist.prototype.onCreate = function() {
 	var record;
 
@@ -173,14 +180,15 @@ FieldsBatchlist.prototype.onCreate = function() {
 
 	return record;
 }
-// On Insert
+
+FieldsBatchlist.prototype.onDelete = function( item, callback, delegator ) {
+	FieldsBatchlist_Function( item.record.mmbatchlist_fieldlist, 'Field_Delete', callback, delegator );
+}
+
 FieldsBatchlist.prototype.onInsert = function( item, callback, delegator ) {
-	FieldsBatchlist_Insert( item.record.mmbatchlist_fieldlist, callback, delegator );
+	FieldsBatchlist_Function( item.record.mmbatchlist_fieldlist, 'Field_Insert', callback, delegator );
 }
-// Go Back
-FieldsBatchlist.prototype.goback = function( e ) {
-	return OpenLinkHandler( e, adminurl, { 'Screen': 'SMOD', 'Store_Code': Store_Code, 'Tab': 'TGCF_SETT', 'Module_Type': 'system' } );
-}
+
 
 
 FieldsBatchlist.prototype.Option_Create = function() {
@@ -196,7 +204,7 @@ FieldsBatchlist.prototype.Option_Create = function() {
 
 FieldsBatchlist.prototype.Option_Insert = function( item, callback, delegator ) {
 	var parent_field = this.GetListItemRecord_Parent( item.index );
-	Option_Insert(parent_field.id, item.record.mmbatchlist_fieldlist, callback, delegator );
+	FieldsBatchlist_Option_Function( parent_field, item.record.mmbatchlist_fieldlist, 'Option_Insert', callback, delegator );
 }
 
 FieldsBatchlist.prototype.Field_RowSupportsChildren_Hook = function( item ) {
@@ -233,11 +241,12 @@ FieldsBatchlist.prototype.onProcessLoadedData = function( recordlist, start_inde
 }
 
 FieldsBatchlist.prototype.Option_Save = function( item, callback, delegator ) {
-	Option_Update( item.record.mmbatchlist_fieldlist, callback, delegator );
+	FieldsBatchlist_Function( item.record.mmbatchlist_fieldlist, 'Option_Update', callback, delegator );
+
 }
 
 FieldsBatchlist.prototype.Option_Delete = function( item, callback, delegator ) {
-	Option_Delete( item.record.mmbatchlist_fieldlist, callback, delegator );
+	FieldsBatchlist_Function( item.record.mmbatchlist_fieldlist, 'Option_Delete', callback, delegator );
 }
 
 // Column 'type'

@@ -1,0 +1,31 @@
+<MvCOMMENT>
+|
+|	Functions for OPTIONS
+|
+|	Option_Read( option var, view )
+|
+|
+</MvCOMMENT>
+
+<MvFUNCTION NAME = "Option_Read" PARAMETERS = "option var, view" STANDARDOUTPUTLEVEL = "">
+	<MvASSIGN NAME = "l.field" MEMBER = "id"			VALUE = "{ miva_variable_value( l.view $ '.d.id' ) }">
+	<MvASSIGN NAME = "l.field" MEMBER = "field_id"		VALUE = "{ miva_variable_value( l.view $ '.d.field_id' ) }">
+	<MvASSIGN NAME = "l.field" MEMBER = "code"			VALUE = "{ miva_variable_value( l.view $ '.d.code' ) }">
+	<MvASSIGN NAME = "l.field" MEMBER = "disp_order"	VALUE = "{ miva_variable_value( l.view $ '.d.disp_order' ) }">
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Option_Insert_LowLevel" PARAMETERS = "option var" STANDARDOUTPUTLEVEL = "">
+	<MvASSIGN NAME = "l.field:id" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Generate( 'TGCD_Fields' ) }">
+
+	<MvQUERY NAME	= "Merchant"
+			 QUERY	= "{ 'INSERT INTO ' $ g.Store_Table_Prefix $ 'TGCD_Fields
+					      ( id, field_id , code, prompt, disp_order )
+						  VALUES
+						  ( ?, ?, ?, ?, ?  )' }"
+			 FIELDS	= "l.field:id, l.field:data_id, l.field:code, l.field:prompt, l.field:type, l.field:required, l.field:disp_order">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-FIELD-0001', g.MvQUERY_Error ) }">
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>

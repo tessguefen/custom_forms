@@ -10,6 +10,11 @@
 |	Field_Update( field var )
 |	Field_Delete( field_id )
 |
+|	JSON_Fields_Load_Query( module var )
+|	JSON_Field_Insert( module var )
+|	JSON_Field_Update( module var )
+|	JSON_Field_Delete( module var )
+|
 |
 </MvCOMMENT>
 
@@ -31,7 +36,7 @@
 					      ( id, data_id, code, prompt, type, required, disp_order )
 						  VALUES
 						  ( ?, ?, ?, ?, ?, ?, ?  )' }"
-			 FIELDS	= "l.data:id, l.data:data_id, l.data:code, l.data:prompt, l.data:type, l.data:required, l.data:disp_order">
+			 FIELDS	= "l.field:id, l.field:data_id, l.field:code, l.field:prompt, l.field:type, l.field:required, l.field:disp_order">
 	<MvIF EXPR = "{ g.MvQUERY_Error }">
 		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-FIELD-0001', g.MvQUERY_Error ) }">
 	</MvIF>
@@ -39,7 +44,7 @@
 	<MvFUNCTIONRETURN VALUE = 1>
 </MvFUNCTION>
 
-<MvFUNCTION NAME = "Field_Insert" PARAMETERS = "data var" STANDARDOUTPUTLEVEL = "">
+<MvFUNCTION NAME = "Field_Insert" PARAMETERS = "field var" STANDARDOUTPUTLEVEL = "">
 	<MvASSIGN NAME = "l.field:code"			VALUE = "{ trim( l.field:code ) }">
 	<MvASSIGN NAME = "l.field:prompt"		VALUE = "{ trim( l.field:prompt ) }">
 	<MvASSIGN NAME = "l.field:type"			VALUE = "{ trim( l.field:type ) }">
@@ -48,19 +53,19 @@
 
 	<MvIF EXPR = "{ NOT Data_Load_ID( l.field:data_id, l.data ) }">
 		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Invalid Data ID">
-		<MvASSIGN NAME = "g.TGCD_Error:code" VALUE = "data_id">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "data_id">
 		<MvFUNCTIONRETURN VALUE = 0>
 	</MvIF>
 
 	<MvIF EXPR = "{ ISNULL l.field:code }">
 		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Code must be present.">
-		<MvASSIGN NAME = "g.TGCD_Error:code" VALUE = "code">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
 		<MvFUNCTIONRETURN VALUE = 0>
 	</MvIF>
 
 	<MvIF EXPR = "{ NOT [ g.Module_Admin ].Validate_Code( l.field:code ) }">
 		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Please enter a Valid Code.">
-		<MvASSIGN NAME = "g.TGCD_Error:code" VALUE = "code">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
 		<MvFUNCTIONRETURN VALUE = 0>
 	</MvIF>
 
@@ -107,7 +112,7 @@
 				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCD_Fields WHERE id = ?' }"
 				FIELDS	= "l.id">
 	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
-		<MvFUNCTIONRETURN VALUE = "{ [ g.Library_Filename_Utilities ].Error( 'TGCD-FIELD-0002', g.MvOPENVIEW_Error ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-FIELD-0002', g.MvOPENVIEW_Error ) }">
 	</MvIF>
 
 	<MvIF EXPR = "{ TGCD_Fields.d.EOF }">
@@ -127,7 +132,7 @@
 				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCD_Fields WHERE code = ?' }"
 				FIELDS	= "l.code">
 	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
-		<MvFUNCTIONRETURN VALUE = "{ [ g.Library_Filename_Utilities ].Error( 'TGCD-FIELD-0004', g.MvOPENVIEW_Error ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-FIELD-0004', g.MvOPENVIEW_Error ) }">
 	</MvIF>
 
 	<MvIF EXPR = "{ TGCD_Fields.d.EOF }">
@@ -173,13 +178,13 @@
 
 	<MvIF EXPR = "{ ISNULL l.field:code }">
 		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Code must be present.">
-		<MvASSIGN NAME = "g.TGCD_Error:code" VALUE = "code">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
 		<MvFUNCTIONRETURN VALUE = 0>
 	</MvIF>
 
 	<MvIF EXPR = "{ NOT [ g.Module_Admin ].Validate_Code( l.field:code ) }">
 		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "Please enter a Valid Code.">
-		<MvASSIGN NAME = "g.TGCD_Error:code" VALUE = "code">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
 		<MvFUNCTIONRETURN VALUE = 0>
 	</MvIF>
 
@@ -345,4 +350,44 @@
 		"total_count": <MvEVAL EXPR = "{ int( l.total_count ) }">
 	}
 }
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "JSON_Field_Insert" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "">
+	<MvASSIGN NAME = "l.field:data_id"		VALUE = "{ g.Data_ID }">
+	<MvASSIGN NAME = "l.field:code"			VALUE = "{ g.Code }">
+	<MvASSIGN NAME = "l.field:prompt"		VALUE = "{ g.Prompt }">
+	<MvASSIGN NAME = "l.field:type"			VALUE = "{ g.Type }">
+	<MvASSIGN NAME = "l.field:required"		VALUE = "{ g.Required }">
+	<MvASSIGN NAME = "l.field:disp_order"	VALUE = "{ g.Disp_Order }">
+
+	<MvIF EXPR = "{ NOT Field_Insert( l.field ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_FieldError( g.TGCD_Error:name, g.TGCD_Error:message ) }">
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Success() }">
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "JSON_Field_Update" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "">
+	<MvASSIGN NAME = "l.field:id"			VALUE = "{ g.ID }">
+	<MvASSIGN NAME = "l.field:data_id"		VALUE = "{ g.Data_ID }">
+	<MvASSIGN NAME = "l.field:code"			VALUE = "{ g.Code }">
+	<MvASSIGN NAME = "l.field:prompt"		VALUE = "{ g.Prompt }">
+	<MvASSIGN NAME = "l.field:type"			VALUE = "{ g.Type }">
+	<MvASSIGN NAME = "l.field:required"		VALUE = "{ g.Required }">
+	<MvASSIGN NAME = "l.field:disp_order"	VALUE = "{ g.Disp_Order }">
+
+	<MvIF EXPR = "{ NOT Field_Update( l.field ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_FieldError( g.TGCD_Error:name, g.TGCD_Error:message ) }">
+	</MvIF>
+	
+	<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Success() }">
+</MvFUNCTION>
+
+
+<MvFUNCTION NAME = "JSON_Field_Delete" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "">
+	<MvIF EXPR = "{ NOT Field_Delete( g.ID ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_FieldError( g.TGCD_Error:name, g.TGCD_Error:message ) }">
+	</MvIF>
+	
+	<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Success() }">
 </MvFUNCTION>
