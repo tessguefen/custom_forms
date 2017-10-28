@@ -1,0 +1,248 @@
+<MvFUNCTION NAME = "Module_Description" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "">
+	<MvASSIGN NAME = "l.module:code"		VALUE = "TGCD">
+	<MvASSIGN NAME = "l.module:name"		VALUE = "Custom Data Sets">
+	<MvASSIGN NAME = "l.module:provider"	VALUE = "Tess Guefen">
+	<MvASSIGN NAME = "l.module:version"		VALUE = "1.000">
+	<MvASSIGN NAME = "l.module:api_ver"		VALUE = "9.00">
+	<MvASSIGN NAME = "l.module:description"	VALUE = "I'll put a more descriptive description later.">
+	<MvASSIGN NAME = "l.module:features"	VALUE = "system, vis_system, data_store, json, clientside">
+</MvFUNCTION>
+
+<MvCOMMENT>
+
+sXX_TGCD_Data
++--------------------+-----------+-----------+
+|         id         |   code    |   name    |
++--------------------+-----------+-----------+
+| TGCD_Data StoreKey | Form Code | Form Name |
++--------------------+-----------+-----------+
+
+
+sXX_TGCD_Fields
++----------------------+--------------------+------+--------+-----------------------------------------+----------+---------------+
+|          id          |      data_id       | code | prompt |                  type                   | required |  disp_order   |
++----------------------+--------------------+------+--------+-----------------------------------------+----------+---------------+
+| TGCD_Fields StoreKey | Associated Data ID | Code | Prompt | text, textarea, radio, checkbox, select | 1/0      | Display Order |
++----------------------+--------------------+------+--------+-----------------------------------------+----------+---------------+
+
+sXX_TGCD_Options
++-----------------------+---------------------+------+--------+---------------+
+|          id           |      field_id       | code | prompt |  disp_order   |
++-----------------------+---------------------+------+--------+---------------+
+| TGCD_Options StoreKey | Associated Field ID | Code | Prompt | Display Order |
++-----------------------+---------------------+------+--------+---------------+
+
+sXX_TGCD_Values
++---------------------+--------------------------+--------------------+---------------------+-------+
+|         id          |         group_id         |      data_id       |      field_id       | value |
++---------------------+--------------------------+--------------------+---------------------+-------+
+| TGCD_Value StoreKey | TGCD_ValueGroup StoreKey | Associated Data ID | Associated Field ID | Value |
++---------------------+--------------------------+--------------------+---------------------+-------+
+
+
++-----------------+
+|    StoreKeys    |
++-----------------+
+| TGCD_Data       |
+| TGCD_Fields     |
+| TGCD_Options    |
+| TGCD_Value      |
+| TGCD_ValueGroup |
++-----------------+
+
+</MvCOMMENT>
+
+<MvFUNCTION NAME = "Module_Install_Store" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "">
+	<MvCOMMENT>
+	|
+	|	Creation of sXX_TGCD_Data
+	|
+	</MvCOMMENT>
+
+	<MvQUERY	NAME	= "Merchant"
+				QUERY	= "{	'CREATE TABLE ' $ g.Store_Table_Prefix $ 'TGCD_Data
+					 				(
+					 					id		' $ [ g.Module_Library_Native_DBAPI ].DB_Type_NUMBER( 0, 0 )	$ ',
+					 					name	' $ [ g.Module_Library_Native_DBAPI ].DB_Type_CHAR( 255 )		$ ',
+					 					code	' $ [ g.Module_Library_Native_DBAPI ].DB_Type_CHAR( 255 )		$ '
+					 				) '}">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "l.void" VALUE = "{ Module_Uninstall_Store( l.module ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-INSTALL-0002:', 'An error occured while creating the table ' $ g.Store_Table_Prefix $ 'TGCD_Data. Please make sure this table was not already created.' ) }">
+	</MvIF>
+
+	<MvCOMMENT>
+	|
+	|	Creation of sXX_TGCD_Fields
+	|
+	</MvCOMMENT>
+
+	<MvQUERY	NAME	= "Merchant"
+				QUERY	= "{	'CREATE TABLE ' $ g.Store_Table_Prefix $ 'TGCD_Fields
+					 				(
+					 					id			' $ [ g.Module_Library_Native_DBAPI ].DB_Type_NUMBER( 0, 0 )	$ ',
+					 					data_id		' $ [ g.Module_Library_Native_DBAPI ].DB_Type_NUMBER( 0, 0 )	$ ',
+					 					code		' $ [ g.Module_Library_Native_DBAPI ].DB_Type_CHAR( 255 )		$ ',
+					 					prompt		' $ [ g.Module_Library_Native_DBAPI ].DB_Type_CHAR( 255 )		$ ',
+					 					type		' $ [ g.Module_Library_Native_DBAPI ].DB_Type_CHAR( 255 )		$ ',
+					 					required	' $ [ g.Module_Library_Native_DBAPI ].DB_Type_BOOL()			$ ',
+					 					disp_order	' $ [ g.Module_Library_Native_DBAPI ].DB_Type_NUMBER( 0, 0 )	$ '
+					 				) ' }">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "l.void" VALUE = "{ Module_Uninstall_Store( l.module ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-INSTALL-0002:', 'An error occured while creating the table ' $ g.Store_Table_Prefix $ 'TGCD_Fields. Please make sure this table was not already created.' ) }">
+	</MvIF>
+
+	<MvCOMMENT>
+	|
+	|	Creation of sXX_TGCD_Options
+	|
+	</MvCOMMENT>
+
+	<MvQUERY	NAME	= "Merchant"
+				QUERY	= "{	'CREATE TABLE ' $ g.Store_Table_Prefix $ 'TGCD_Options
+					 				(
+					 					id			' $ [ g.Module_Library_Native_DBAPI ].DB_Type_NUMBER( 0, 0 )	$ ',
+					 					field_id	' $ [ g.Module_Library_Native_DBAPI ].DB_Type_NUMBER( 0, 0 )	$ ',
+					 					code		' $ [ g.Module_Library_Native_DBAPI ].DB_Type_CHAR( 255 )		$ ',
+					 					prompt		' $ [ g.Module_Library_Native_DBAPI ].DB_Type_CHAR( 255 )		$ ',
+					 					disp_order	' $ [ g.Module_Library_Native_DBAPI ].DB_Type_NUMBER( 0, 0 )	$ '
+					 				) ' }">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "l.void" VALUE = "{ Module_Uninstall_Store( l.module ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-INSTALL-0003:', 'An error occured while creating the table ' $ g.Store_Table_Prefix $ 'TGCD_Options. Please make sure this table was not already created.' ) }">
+	</MvIF>
+
+	<MvCOMMENT>
+	|
+	|	Creation of sXX_TGCD_Values
+	|
+	</MvCOMMENT>
+
+	<MvQUERY	NAME	= "Merchant"
+				QUERY	= "{	'CREATE TABLE ' $ g.Store_Table_Prefix $ 'TGCD_Values
+					 				(
+					 					id			' $ [ g.Module_Library_Native_DBAPI ].DB_Type_NUMBER( 0, 0 )	$ ',
+					 					group_id	' $ [ g.Module_Library_Native_DBAPI ].DB_Type_NUMBER( 0, 0 )	$ ',
+					 					data_id		' $ [ g.Module_Library_Native_DBAPI ].DB_Type_NUMBER( 0, 0 )	$ ',
+					 					field_id	' $ [ g.Module_Library_Native_DBAPI ].DB_Type_NUMBER( 0, 0 )	$ ',
+					 					value		' $ [ g.Module_Library_Native_DBAPI ].DB_Type_MEMO()			$ '
+					 				) ' }">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "l.void" VALUE = "{ Module_Uninstall_Store( l.module ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-INSTALL-0004:', 'An error occured while creating the table ' $ g.Store_Table_Prefix $ 'TGCD_Values. Please make sure this table was not already created.' ) }">
+	</MvIF>
+	
+	<MvCOMMENT>
+	|
+	|	Creation of StoreKeys
+	|
+	</MvCOMMENT>
+	<MvIF EXPR = "{ NOT [ g.Module_Library_DB ].StoreKey_Insert( 'TGCD_Data', 1 ) }">
+		<MvASSIGN NAME = "l.void" VALUE = "{ Module_Uninstall_Store( l.module ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-INSTALL-0005:', 'An error occured while creating the storekey, TGCD_Data. Please make sure this does not already exsist.' ) }">
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Library_DB ].StoreKey_Insert( 'TGCD_Fields', 1 ) }">
+		<MvASSIGN NAME = "l.void" VALUE = "{ Module_Uninstall_Store( l.module ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-INSTALL-0006:', 'An error occured while creating the storekey, TGCD_Fields. Please make sure this does not already exsist.' ) }">
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Library_DB ].StoreKey_Insert( 'TGCD_Options', 1 ) }">
+		<MvASSIGN NAME = "l.void" VALUE = "{ Module_Uninstall_Store( l.module ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-INSTALL-0007:', 'An error occured while creating the storekey, TGCD_Options. Please make sure this does not already exsist.' ) }">
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Library_DB ].StoreKey_Insert( 'TGCD_Value', 1 ) }">
+		<MvASSIGN NAME = "l.void" VALUE = "{ Module_Uninstall_Store( l.module ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-INSTALL-0008:', 'An error occured while creating the storekey, TGCD_Value. Please make sure this does not already exsist.' ) }">
+	</MvIF>
+
+	<MvIF EXPR = "{ NOT [ g.Module_Library_DB ].StoreKey_Insert( 'TGCD_ValueGroup', 1 ) }">
+		<MvASSIGN NAME = "l.void" VALUE = "{ Module_Uninstall_Store( l.module ) }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-INSTALL-0009:', 'An error occured while creating the storekey, TGCD_ValueGroup. Please make sure this does not already exsist.' ) }">
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1 />
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Module_Upgrade_Store" PARAMETERS = "module var, version" STANDARDOUTPUTLEVEL = "" ERROROUTPUTLEVEL = "">
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Module_Uninstall_Store" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "" ERROROUTPUTLEVEL = "">
+	<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCD_Data' }">
+	<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCD_Fields' }">
+	<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCD_Options' }">
+	<MvQUERY NAME = "Merchant" QUERY = "{ 'DROP TABLE ' $  g.Store_Table_Prefix $ 'TGCD_Values' }">
+
+	<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCD_Data' ) }">
+	<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCD_Fields' ) }">
+	<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCD_Options' ) }">
+	<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCD_Value' ) }">
+	<MvASSIGN NAME = "l.null" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Delete( 'TGCD_ValueGroup' ) }">
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvCOMMENT>
+|
+| system
+|
+</MvCOMMENT>
+
+<MvFUNCTION NAME = "SystemModule_Action" PARAMETERS = "module var, action" STANDARDOUTPUTLEVEL = "">
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "SystemModule_Screen" PARAMETERS = "module var, screen" STANDARDOUTPUTLEVEL = "">
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "SystemModule_UIException" PARAMETERS = "module var, exception" STANDARDOUTPUTLEVEL = "">
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvCOMMENT>
+|
+| vis_system
+|
+</MvCOMMENT>
+
+<MvFUNCTION NAME = "Module_System_Tabs" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "">
+	
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Module_System_Head" PARAMETERS = "module var, tab" STANDARDOUTPUTLEVEL = "text, html, compresswhitespace">
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Module_System_Content" PARAMETERS = "module var, tab, load_fields" STANDARDOUTPUTLEVEL = "text, html, compresswhitespace">
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Module_System_Update" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "">
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Module_System_Validate" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "">
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvCOMMENT>
+|
+| json
+|
+</MvCOMMENT>
+
+<MvFUNCTION NAME = "Module_JSON" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "" ERROROUTPUTLEVEL = "">
+</MvFUNCTION>
+
+<MvCOMMENT>
+|
+| clientside
+|
+</MvCOMMENT>
+
+<MvFUNCTION NAME = "Module_Clientside" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "" ERROROUTPUTLEVEL = "">
+</MvFUNCTION>
