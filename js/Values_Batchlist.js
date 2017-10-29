@@ -107,7 +107,9 @@ function Select_Radio_Column( column ) {
 		self.retrieveOptions = [];
 	}
 
-	self.retrieveOptions[ 'Fields_' + column.code ] = column.options;
+	if ( !self.retrieveOptions[ 'Fields_' + column.code ] ) {
+		self.retrieveOptions[ 'Fields_' + column.code ] = column.options;
+	}
 
 	self.SetOnDisplayData( this.onDisplayData );
 	self.SetOnDisplayEdit( this.onDisplayEdit );
@@ -115,25 +117,27 @@ function Select_Radio_Column( column ) {
 DeriveFrom( MMBatchList_Column_Text, Select_Radio_Column );
 
 Select_Radio_Column.prototype.onDisplayEdit = function( record, item ) {
+	console.log(this);
 	var i, i_len;
 	var select;
 	var self = this;
 	var selected = record[ this.code ];
 	var field_options = self.retrieveOptions[ this.code ];
 
-	select									= newElement( 'select', { 'name': 'type' }, null, null );
+	select									= newElement( 'select', { 'name': self.code }, null, null );
 	//select.options[ select.options.length ] = new Option( 'Select One', '' );
 
 	for ( i = 0, i_len = field_options.length; i < i_len; i++ ) {
 		select.options[ select.options.length ] = new Option( field_options[ i ].prompt, field_options[ i ].prompt );
 	}
-
-	for ( i = 0, i_len = select.options.length; i < i_len; i++ )
-	{
-		if ( select.options[ i ].value == selected )
+	if ( selected ) {
+		for ( i = 0, i_len = select.options.length; i < i_len; i++ )
 		{
-			select.selectedIndex = i;
-			break;
+			if ( select.options[ i ].value == selected )
+			{
+				select.selectedIndex = i;
+				break;
+			}
 		}
 	}
 	return select;
