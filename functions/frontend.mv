@@ -1,0 +1,52 @@
+<MvCOMMENT>
+|
+|	Functions for FRONTEND
+|	
+|	FrontEnd_Form()
+|	FrontEnd_Validate_Field( field var, current_value )
+|
+</MvCOMMENT>
+
+<MvFUNCTION NAME = "FrontEnd_FormSubmit" PARAMETERS = "" STANDARDOUTPUTLEVEL = "">
+	<MvCOMMENT>
+		Form_Code
+		Fields:[ Code ]
+	</MvCOMMENT>
+	<MvIF EXPR = "{ NOT Data_Load_Code( g.Form_Code, l.data ) }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "The Data form does not exist.">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "Form_Code">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvFOREACH ITERATOR = "l.field" ARRAY = "l.fields" COUNT = "{ Load_Data_Fields( l.data:id, l.fields) }">
+		<MvASSIGN NAME = "l.current_value" VALUE = "{ trim( miva_variable_value( 'g.Fields:' $ l.field:code )) }">	
+		<MvIF EXPR = "{ NOT FrontEnd_Validate_Field( l.field, l.current_value) }">
+			<MvFUNCTIONRETURN VALUE = 0>
+		</MvIF>
+	</MvFOREACH>
+
+	<MvIF EXPR = "{ NOT Values_Insert( g.Fields, l.data:id) }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvASSIGN NAME = "g.Fields" VALUE = "">
+	<MvASSIGN NAME = "g.TGCD_Success" VALUE = 1>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "FrontEnd_Validate_Field" PARAMETERS = "field var, current_value" STANDARDOUTPUTLEVEL = "">
+	<MvIF EXPR = "{ ( l.field:required EQ 1 ) AND ( ISNULL l.current_value ) }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "{ l.field:prompt $ ' is required.' }">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "{ l.field:code }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ ( l.field:type EQ 'email' ) AND ( NOT [ g.Module_Library_Utilities ].Email_Validate( l.current_value ) ) }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "{ 'Please specify a valid email address for ' $ l.field:prompt }">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "{ l.field:code }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>

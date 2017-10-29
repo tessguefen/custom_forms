@@ -335,3 +335,15 @@
 	
 	<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Success() }">
 </MvFUNCTION>
+
+
+<MvCOMMENT>
+	SELECT * FROM s01_TGCD_Values
+	WHERE
+		data_id = 1 AND
+		(
+			( field_id = 7 AND value = "waaaaa") OR
+			( field_id = 9 AND value = "Mark" )
+		)
+	GROUP BY group_id
+</MvCOMMENT>

@@ -207,6 +207,9 @@ sXX_TGCD_Values
 </MvCOMMENT>
 
 <MvFUNCTION NAME = "SystemModule_Action" PARAMETERS = "module var, action" STANDARDOUTPUTLEVEL = "">
+	<MvIF EXPR = "{ l.action EQ 'TGCDFORM' }">
+		<MvASSIGN NAME = "l.void" VALUE = "{ FrontEnd_FormSubmit() }">
+	</MvIF>
 	<MvFUNCTIONRETURN VALUE = 1>
 </MvFUNCTION>
 
@@ -342,3 +345,4 @@ sXX_TGCD_Values
 <MvINCLUDE FILE = "functions/fields.mv">
 <MvINCLUDE FILE = "functions/options.mv">
 <MvINCLUDE FILE = "functions/values.mv">
+<MvINCLUDE FILE = "functions/frontend.mv">

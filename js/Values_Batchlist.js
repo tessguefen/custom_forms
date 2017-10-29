@@ -117,7 +117,6 @@ function Select_Radio_Column( column ) {
 DeriveFrom( MMBatchList_Column_Text, Select_Radio_Column );
 
 Select_Radio_Column.prototype.onDisplayEdit = function( record, item ) {
-	console.log(this);
 	var i, i_len;
 	var select;
 	var self = this;
