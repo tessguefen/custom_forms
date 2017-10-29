@@ -11,11 +11,12 @@ function ValuesBatchlist_Load_Query( filter, sort, offset, count, callback, dele
 	return AJAX_Call_Module(	callback,
 								'admin',
 								'TGCD',
-								'Data_Load_Query',
+								'JSON_Values_Load_Query',
 								'&Filter=' + EncodeArray( filter ) +
 								'&Sort=' + encodeURIComponent( sort ) +
 								'&Offset=' + encodeURIComponent( offset ) +
-								'&Count=' + encodeURIComponent( count ),
+								'&Count=' + encodeURIComponent( count ) +
+								'&Data_ID=' + Data_ID,
 								delegator );
 }
 
@@ -24,7 +25,7 @@ function ValuesBatchlist_Function( fieldlist, _function, callback, delegator ) {
 									   'admin',
 									   'TGCD',
 									   _function,
-									   '',
+									   'Data_ID=' + Data_ID,
 									   fieldlist,
 									   delegator );
 }
@@ -55,7 +56,6 @@ ValuesBatchlist.prototype.onCreateRootColumnList = function() {
 	var self = this;
 	var columnlist = [];
 	columnlist.push(new MMBatchList_Column_Name( 'Group ID', 'group_id', 'group_id').SetAdvancedSearchEnabled(false).SetDisplayInMenu(false).SetDisplayInList(false) );
-	columnlist.push(new MMBatchList_Column_Name( 'Field ID', 'field_id', 'field_id').SetAdvancedSearchEnabled(false).SetDisplayInMenu(false).SetDisplayInList(false) );
 	for ( i = 0, i_len = self.fields_length; i < i_len; i++ ) {
 		if ( self.fields[ i ].type == 'radio' || self.fields[ i ].type == 'select' ) {
 			columnlist.push( new Select_Radio_Column( self.fields[ i ] ) );
@@ -80,19 +80,23 @@ ValuesBatchlist.prototype.onCreate = function() {
 	record = new Object();
 	record.group_id = 0;
 	for ( i = 0, i_len = self.fields_length; i < i_len; i++ ) {
-		record[ 'Fields_' + self.fields[ i ].code ] = '';
+		if ( self.fields[ i ].type == 'date' ) {
+			record[ 'Fields_' + self.fields[ i ].code ] = Math.floor(Date.now() / 1000);
+		} else {
+			record[ 'Fields_' + self.fields[ i ].code ] = '';
+		}
 	}
 	return record;
 }
 
 ValuesBatchlist.prototype.onSave = function( item, callback, delegator ) {
-	ValuesBatchlist_Function( item.record.mmbatchlist_fieldlist, 'Data_Update', callback, delegator );
+	ValuesBatchlist_Function( item.record.mmbatchlist_fieldlist, 'Values_Update', callback, delegator );
 }
 ValuesBatchlist.prototype.onInsert = function( item, callback, delegator ) {
-	ValuesBatchlist_Function( item.record.mmbatchlist_fieldlist, 'Data_Insert', callback, delegator );
+	ValuesBatchlist_Function( item.record.mmbatchlist_fieldlist, 'Values_Insert', callback, delegator );
 }
 ValuesBatchlist.prototype.onDelete = function( item, callback, delegator ) {
-	ValuesBatchlist_Function( item.record.mmbatchlist_fieldlist, 'Data_Delete', callback, delegator );
+	ValuesBatchlist_Function( item.record.mmbatchlist_fieldlist, 'Values_Delete', callback, delegator );
 }
 
 function Select_Radio_Column( column ) {
@@ -114,18 +118,19 @@ Select_Radio_Column.prototype.onDisplayEdit = function( record, item ) {
 	var i, i_len;
 	var select;
 	var self = this;
-	var options = self.retrieveOptions[ this.code ];
+	var selected = record[ this.code ];
+	var field_options = self.retrieveOptions[ this.code ];
 
 	select									= newElement( 'select', { 'name': 'type' }, null, null );
-	select.options[ select.options.length ] = new Option( 'Select One', '' );
+	//select.options[ select.options.length ] = new Option( 'Select One', '' );
 
-	for ( i = 0, i_len = options.length; i < i_len; i++ ) {
-		select.options[ select.options.length ] = new Option( options[ i ].prompt, options[ i ].code );
+	for ( i = 0, i_len = field_options.length; i < i_len; i++ ) {
+		select.options[ select.options.length ] = new Option( field_options[ i ].prompt, field_options[ i ].prompt );
 	}
 
 	for ( i = 0, i_len = select.options.length; i < i_len; i++ )
 	{
-		if ( select.options[ i ].value == record.type )
+		if ( select.options[ i ].value == selected )
 		{
 			select.selectedIndex = i;
 			break;
@@ -136,9 +141,6 @@ Select_Radio_Column.prototype.onDisplayEdit = function( record, item ) {
 
 Select_Radio_Column.prototype.onDisplayData = function( record ) {
 	var text = newElement( 'div', null, null, null );
-	console.log(record);
-
-	text.innerHTML = '';
-
+	text.innerHTML = record[ this.code ];
 	return text;
 }

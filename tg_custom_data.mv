@@ -310,7 +310,11 @@ sXX_TGCD_Values
 	<MvIF EXPR = "{ g.Module_Function EQ 'Option_Update' }">		<MvFUNCTIONRETURN VALUE = "{ JSON_Option_Update( l.module ) }">		</MvIF>
 	<MvIF EXPR = "{ g.Module_Function EQ 'Option_Delete' }">		<MvFUNCTIONRETURN VALUE = "{ JSON_Option_Delete( l.module ) }">		</MvIF>
 
-	<MvIF EXPR = "{ g.Module_Function EQ 'Load_Fields' }">			<MvFUNCTIONRETURN VALUE = "{ JSON_Load_Fields( l.module ) }">		</MvIF>
+	<MvIF EXPR = "{ g.Module_Function EQ 'Load_Fields' }">				<MvFUNCTIONRETURN VALUE = "{ JSON_Load_Fields( l.module ) }">		</MvIF>
+	<MvIF EXPR = "{ g.Module_Function EQ 'JSON_Values_Load_Query' }">	<MvFUNCTIONRETURN VALUE = "{ JSON_Values_Load_Query( l.module ) }">	</MvIF>
+	<MvIF EXPR = "{ g.Module_Function EQ 'Values_Insert' }">			<MvFUNCTIONRETURN VALUE = "{ JSON_Values_Insert( l.module ) }">		</MvIF>
+	<MvIF EXPR = "{ g.Module_Function EQ 'Values_Update' }">			<MvFUNCTIONRETURN VALUE = "{ JSON_Values_Update( l.module ) }">		</MvIF>
+	<MvIF EXPR = "{ g.Module_Function EQ 'Values_Delete' }">			<MvFUNCTIONRETURN VALUE = "{ JSON_Values_Delete( l.module ) }">		</MvIF>
 </MvFUNCTION>
 
 <MvCOMMENT>
