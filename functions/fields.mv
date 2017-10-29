@@ -22,6 +22,7 @@
 |
 |	Load_Data_Fields( data_id, output var )
 |	Delete_Data_Fields( data_id )
+|	Load_Field_Options( field_id, output var )
 |
 </MvCOMMENT>
 
@@ -166,7 +167,11 @@
 	<MvIF EXPR = "{ g.MvQUERY_Error }">
 		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-FIELD-0006', g.MvQUERY_Error ) }">
 	</MvIF>
-	
+
+	<MvIF EXPR = "{ ( l.field:type NE 'radio' ) AND ( l.field:type NE 'select') }">
+		<MvASSIGN NAME = "l.void" VALUE = "{ Option_Delete_Field_All( l.field:id ) }">	
+	</MvIF>
+
 	<MvFUNCTIONRETURN VALUE = 1>
 </MvFUNCTION>
 
@@ -483,6 +488,21 @@
 					"type" : "<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( l.field:type ) }">",
 					"required": <MvEVAL EXPR = "{ int( l.field:required ) }">,
 					"disp_order": <MvEVAL EXPR = "{ int( l.field:disp_order ) }">
+					<MvIF EXPR = "{ Load_Field_Options( l.field:id, l.field:options ) }">
+						,
+						"options": [
+							<MvFOREACH ITERATOR = "l.option" ARRAY = "l.field:options" INDEX = "l.count">
+								<MvIF EXPR = "{ l.count GT 1 }">,</MvIF>
+								{
+									"id": <MvEVAL EXPR = "{ int( l.option:id ) }">,
+									"field_id": <MvEVAL EXPR = "{ int( l.option:field_id ) }">,
+									"code": "<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( l.option:code ) }">",
+									"prompt": "<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( l.option:prompt ) }">",
+									"disp_order": <MvEVAL EXPR = "{ int( l.option:disp_order ) }">
+								}
+							</MvFOREACH>
+						]
+					</MvIF>
 				<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_End() }">
 			</MvFOREACH>
 			]
@@ -631,7 +651,7 @@
 <MvFUNCTION NAME = "Load_Data_Fields" PARAMETERS = "data_id, output var" STANDARDOUTPUTLEVEL = "">
 	<MvOPENVIEW NAME	= "Merchant"
 				VIEW	= "TGCD_Fields"
-				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCD_Fields WHERE data_id = ?' }"
+				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCD_Fields WHERE data_id = ? ORDER BY disp_order' }"
 				FIELDS	= "l.data_id">
 	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
 		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-FIELD-0013', g.MvOPENVIEW_Error ) }">
@@ -653,6 +673,7 @@
 
 	<MvFUNCTIONRETURN VALUE = "{ l.count }">
 </MvFUNCTION>
+
 <MvFUNCTION NAME = "Delete_Data_Fields" PARAMETERS = "data_id" STANDARDOUTPUTLEVEL = "">
 	<MvFOREACH ITERATOR = "l.field" ARRAY = "l.fields" COUNT = "{ Load_Data_Fields( l.data_id, l.fields ) }">
 		<MvIF EXPR = "{ NOT Field_Delete( l.field:id ) }">
@@ -660,4 +681,30 @@
 		</MvIF>
 	</MvFOREACH>
 	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Load_Field_Options" PARAMETERS = "field_id, output var" STANDARDOUTPUTLEVEL = "">
+	<MvOPENVIEW NAME	= "Merchant"
+				VIEW	= "TGCD_Options"
+				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCD_Options WHERE field_id = ? ORDER BY disp_order' }"
+				FIELDS	= "l.field_id">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-FIELD-0013', g.MvOPENVIEW_Error ) }">
+	</MvIF>
+
+	<MvIF EXPR = "{ TGCD_Options.d.EOF }">
+		<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Options">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_DB ].Error_Load_EOF( 'TGCD-FIELD-0014' ) }">
+	</MvIF>
+	
+	<MvASSIGN NAME = "l.count" VALUE = "0">
+
+	<MvWHILE EXPR = "{ ( NOT TGCD_Options.d.EOF ) }">
+		<MvEVAL EXPR = "{ Option_Read( l.output[++l.count], 'TGCD_Options' ) }">
+		<MvSKIP NAME = "Merchant" VIEW = "TGCD_Options" ROWS = 1>
+	</MvWHILE>
+
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Options">
+
+	<MvFUNCTIONRETURN VALUE = "{ l.count }">
 </MvFUNCTION>

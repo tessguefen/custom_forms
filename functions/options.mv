@@ -26,6 +26,7 @@
 	<MvASSIGN NAME = "l.option" MEMBER = "id"			VALUE = "{ miva_variable_value( l.view $ '.d.id' ) }">
 	<MvASSIGN NAME = "l.option" MEMBER = "field_id"		VALUE = "{ miva_variable_value( l.view $ '.d.field_id' ) }">
 	<MvASSIGN NAME = "l.option" MEMBER = "code"			VALUE = "{ miva_variable_value( l.view $ '.d.code' ) }">
+	<MvASSIGN NAME = "l.option" MEMBER = "prompt"		VALUE = "{ miva_variable_value( l.view $ '.d.prompt' ) }">
 	<MvASSIGN NAME = "l.option" MEMBER = "disp_order"	VALUE = "{ miva_variable_value( l.view $ '.d.disp_order' ) }">
 </MvFUNCTION>
 
