@@ -44,7 +44,7 @@ sXX_TGCD_Values
 |       StoreKeys       |
 +-----------------------+
 | TGCD_Data             |
-| TGCD_Fields_          |
+| TGCD_Fields           |
 | TGCD_Fields_DispOrder |
 | TGCD_Options          |
 | TGCD_Options_DisOrder |

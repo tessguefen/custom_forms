@@ -13,19 +13,23 @@
 		Fields:[ Code ]
 	</MvCOMMENT>
 	<MvIF EXPR = "{ NOT Data_Load_Code( g.Form_Code, l.data ) }">
-		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "The Data form does not exist.">
-		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "Form_Code">
+		<MvASSIGN NAME = "l.error:message" VALUE = "The Data form does not exist.">
+		<MvASSIGN NAME = "l.error:name" VALUE = "Form_Code">
+		<MvASSIGN NAME = "l.void" VALUE = "{ miva_array_insert_var( g.TGCD_Errors, l.error, -1 ) }">
 		<MvFUNCTIONRETURN VALUE = 0>
 	</MvIF>
 
 	<MvFOREACH ITERATOR = "l.field" ARRAY = "l.fields" COUNT = "{ Load_Data_Fields( l.data:id, l.fields) }">
 		<MvASSIGN NAME = "l.current_value" VALUE = "{ trim( miva_variable_value( 'g.Fields:' $ l.field:code )) }">	
-		<MvIF EXPR = "{ NOT FrontEnd_Validate_Field( l.field, l.current_value) }">
-			<MvFUNCTIONRETURN VALUE = 0>
-		</MvIF>
+		<MvASSIGN NAME = "l.void" VALUE = "{ FrontEnd_Validate_Field( l.field, l.current_value, g.TGCD_Errors) }">
 	</MvFOREACH>
 
+	<MvIF EXPR = "{ miva_array_elements( g.TGCD_Errors ) GT 0 }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
 	<MvIF EXPR = "{ NOT Values_Insert( g.Fields, l.data:id) }">
+		<MvASSIGN NAME = "l.void" VALUE = "{ miva_array_insert_var( g.TGCD_Errors, g.TGCD_Error, -1 ) }">
 		<MvFUNCTIONRETURN VALUE = 0>
 	</MvIF>
 
@@ -35,16 +39,18 @@
 	<MvFUNCTIONRETURN VALUE = 1>
 </MvFUNCTION>
 
-<MvFUNCTION NAME = "FrontEnd_Validate_Field" PARAMETERS = "field var, current_value" STANDARDOUTPUTLEVEL = "">
+<MvFUNCTION NAME = "FrontEnd_Validate_Field" PARAMETERS = "field var, current_value, errors var" STANDARDOUTPUTLEVEL = "">
 	<MvIF EXPR = "{ ( l.field:required EQ 1 ) AND ( ISNULL l.current_value ) }">
-		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "{ l.field:prompt $ ' is required.' }">
-		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "{ l.field:code }">
+		<MvASSIGN NAME = "l.error:message" VALUE = "{ l.field:prompt $ ' is required.' }">
+		<MvASSIGN NAME = "l.error:name" VALUE = "{ l.field:code }">
+		<MvASSIGN NAME = "l.void" VALUE = "{ miva_array_insert_var( l.errors, l.error, -1 ) }">
 		<MvFUNCTIONRETURN VALUE = 0>
 	</MvIF>
 
-	<MvIF EXPR = "{ ( l.field:type EQ 'email' ) AND ( NOT [ g.Module_Library_Utilities ].Email_Validate( l.current_value ) ) }">
-		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "{ 'Please specify a valid email address for ' $ l.field:prompt }">
-		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "{ l.field:code }">
+	<MvIF EXPR = "{ ( NOT ISNULL l.current_value ) AND ( l.field:type EQ 'email' ) AND ( NOT [ g.Module_Library_Utilities ].Email_Validate( l.current_value ) ) }">
+		<MvASSIGN NAME = "l.error:message" VALUE = "{ 'Please specify a valid email address for ' $ l.field:prompt }">
+		<MvASSIGN NAME = "l.error:name" VALUE = "{ l.field:code }">
+		<MvASSIGN NAME = "l.void" VALUE = "{ miva_array_insert_var( l.errors, l.error, -1 ) }">
 		<MvFUNCTIONRETURN VALUE = 0>
 	</MvIF>
 

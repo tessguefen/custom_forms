@@ -289,6 +289,8 @@
 		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Error( 'TGCD-Data-JSON-0001', g.MvOPENVIEW_Error ) }">
 	</MvIF>
 
+	<MvCOMMENT><MvEVAL EXPR = "{ glosub( miva_array_serialize( l.search_sql ), ',', asciichar( 10 ) ) }"></MvCOMMENT>
+
 	<MvASSIGN NAME = "l.count" VALUE = 0>
 
 	<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Response_Start() }">
@@ -346,4 +348,34 @@
 			( field_id = 9 AND value = "Mark" )
 		)
 	GROUP BY group_id
+
+
+
+	SELECT
+		s.*
+	FROM
+		s01_TGCD_Values s
+	INNER JOIN
+		s01_TGCD_Fields fields
+	ON
+		( fields.id = s.field_id )
+	INNER JOIN
+		s01_TGCD_Values AS s1
+	ON
+		( s.group_id = s1.group_id )
+	WHERE
+		( fields.code = 'dogs' ) AND
+		( s1.value = 'Another Dog')
+	GROUP BY s.group_id
+
+
+	SELECT
+		s.*
+	FROM
+		s01_TGCD_Values s
+	WHERE
+		group_id IN ( SELECT group_id FROM s01_TGCD_Values s1 WHERE data_id = 1 AND value LIKE '%a%' )
+	GROUP BY
+		group_id
+	ORDER BY case when field_id = 7 then 1 else 2 end, value
 </MvCOMMENT>
