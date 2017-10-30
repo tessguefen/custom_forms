@@ -23,3 +23,19 @@ LEFT OUTER JOIN s01_TGCD_Values v_2 ON v_2.group_id = g.group_id AND v_2.field_i
 
 
 so gfx_1.field_id = 1 would be entry #1's id (and you would you ? with the parameterized query, of course)
+
+
+
+```sql
+CREATE TABLE `s01_TGCD_GroupXField` (
+`group_id` int(11) DEFAULT NULL,
+`field_id` int(11) DEFAULT NULL,
+UNIQUE KEY `s01_TGCD_ValueXGroup_1` (`group_id`,`field_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE `s01_TGCD_Groups` (
+`group_id` int(11) NOT NULL,
+PRIMARY KEY (`group_id`),
+UNIQUE KEY `s01_TGCD_Groups_1` (`group_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+```
