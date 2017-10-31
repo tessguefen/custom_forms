@@ -56,3 +56,21 @@
 
 	<MvFUNCTIONRETURN VALUE = 1>
 </MvFUNCTION>
+
+<MvFUNCTION NAME = "FrontEnd_Load_DataFields" PARAMETERS = "data_code, return var" STANDARDOUTPUTLEVEL = "">
+	<MvIF EXPR = "{ NOT Data_Load_Code( l.data_code, l.data ) }">
+		<MvASSIGN NAME = "l.error:message" VALUE = "The Data form does not exist.">
+		<MvASSIGN NAME = "l.error:name" VALUE = "Form_Code">
+		<MvASSIGN NAME = "l.void" VALUE = "{ miva_array_insert_var( g.TGCD_Errors, l.error, -1 ) }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvASSIGN NAME = "l.return:data" VALUE = "{ l.data }">
+
+	<MvFOREACH ITERATOR = "l.field" ARRAY = "l.return:fields" COUNT = "{ Load_Data_Fields( l.data:id, l.return:fields) }">
+		<MvASSIGN NAME = "l.field" MEMBER = "value" VALUE = "{ trim( miva_variable_value( 'g.Fields:' $ l.field:code )) }">
+		<MvASSIGN NAME = "l.void" VALUE = "{ Load_Field_Options( l.field:id, l.field:options ) }">
+	</MvFOREACH>
+
+
+</MvFUNCTION>
