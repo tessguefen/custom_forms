@@ -4,12 +4,15 @@
 |	
 |		Value_Read( value var, view )
 |		Group_Read( value var, view )
+|		Group_Insert( data_id, group_id var )
+|		Group_Insert_LowLevel( data_id, group_id var )
+|		GroupXField_Insert( group_id, field_id )
 |		Value_Insert_LowLevel( value var )
 |		Value_Insert( value var )
 |		Values_Insert( values var, data_id )
-|		Value_Load_ID( id, output var )
 |		Value_Load_DataGroupField( data_id, group_id, field_id, output var )
 |		Values_Load_Group( group_id, output var )
+|		Value_Load_GroupxField( group_id, field_id, output var )
 |		Value_Update_LowLevel( value var )
 |		Value_Update( value var )
 |		Values_Update( values var, data_id, group_id )
@@ -25,7 +28,6 @@
 </MvCOMMENT>
 
 <MvFUNCTION NAME = "Value_Read" PARAMETERS = "value var, view" STANDARDOUTPUTLEVEL = "">
-	<MvASSIGN NAME = "l.value" MEMBER = "id"		VALUE = "{ miva_variable_value( l.view $ '.d.id' ) }">
 	<MvASSIGN NAME = "l.value" MEMBER = "group_id"	VALUE = "{ miva_variable_value( l.view $ '.d.group_id' ) }">
 	<MvASSIGN NAME = "l.value" MEMBER = "data_id"	VALUE = "{ miva_variable_value( l.view $ '.d.data_id' ) }">
 	<MvASSIGN NAME = "l.value" MEMBER = "field_id"	VALUE = "{ miva_variable_value( l.view $ '.d.field_id' ) }">
@@ -44,15 +46,53 @@
 	<MvASSIGN NAME = "l.value" MEMBER = "field_code" VALUE = "{ l.field:code }">
 </MvFUNCTION>
 
+<MvFUNCTION NAME = "Group_Insert" PARAMETERS = "data_id, group_id var" STANDARDOUTPUTLEVEL = "">
+	<MvIF EXPR = "{ NOT Data_Load_ID( l.data_id, l.data ) }">
+		<MvFUNCTIONRETURN VALUE =  0>
+	</MvIF>
+	<MvFUNCTIONRETURN VALUE = "{ Group_Insert_LowLevel( l.data_id, l.group_id ) }">
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "Group_Insert_LowLevel" PARAMETERS = "data_id, group_id var" STANDARDOUTPUTLEVEL = "">
+	<MvASSIGN NAME = "l.group_id" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Generate( 'TGCD_ValueGroup' ) }">
+	<MvQUERY NAME	= "Merchant"
+			 QUERY	= "{ 'INSERT INTO ' $ g.Store_Table_Prefix $ 'TGCD_Groups
+					      ( data_id, group_id )
+						  VALUES
+						  ( ?, ? )' }"
+			 FIELDS	= "l.data_id, l.group_id">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-VALUE-0010', g.MvQUERY_Error ) }">
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "GroupXField_Insert" PARAMETERS = "group_id, field_id" STANDARDOUTPUTLEVEL = "">
+	<MvQUERY NAME	= "Merchant"
+			 QUERY	= "{ 'INSERT INTO ' $ g.Store_Table_Prefix $ 'TGCD_GroupXField
+					      ( group_id, field_id )
+						  VALUES
+						  ( ?, ? )' }"
+			 FIELDS	= "l.group_id, l.field_id">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-VALUE-0011', g.MvQUERY_Error ) }">
+	</MvIF>
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
 <MvFUNCTION NAME = "Value_Insert_LowLevel" PARAMETERS = "value var" STANDARDOUTPUTLEVEL = "">
-	<MvASSIGN NAME = "l.value:id" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Generate( 'TGCD_Value' ) }">
+	<MvIF EXPR = "{ NOT GroupXField_Insert( l.value:group_id, l.value:field_id ) }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
 
 	<MvQUERY NAME	= "Merchant"
 			 QUERY	= "{ 'INSERT INTO ' $ g.Store_Table_Prefix $ 'TGCD_Values
-					      ( id, group_id, data_id, field_id, value )
+					      ( group_id, data_id, field_id, value )
 						  VALUES
-						  ( ?, ?, ?, ?, ? )' }"
-			 FIELDS	= "l.value:id, l.value:group_id, l.value:data_id, l.value:field_id, l.value:value">
+						  ( ?, ?, ?, ? )' }"
+			 FIELDS	= "l.value:group_id, l.value:data_id, l.value:field_id, l.value:value">
 	<MvIF EXPR = "{ g.MvQUERY_Error }">
 		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-VALUE-0001', g.MvQUERY_Error ) }">
 	</MvIF>
@@ -89,7 +129,9 @@
 		<MvFUNCTIONRETURN VALUE = 0>
 	</MvIF>
 
-	<MvASSIGN NAME = "l.group_id" VALUE = "{ [ g.Module_Library_DB ].StoreKey_Generate( 'TGCD_ValueGroup' ) }">
+	<MvIF EXPR = "{ NOT Group_Insert( l.data_id, l.group_id ) }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
 
 	<MvFOREACH ITERATOR = "l.member" ARRAY = "l.members" COUNT = "{ miva_struct_members( l.values, l.members) }">
 		<MvIF EXPR = "{ NOT Field_Load_Code( l.member, l.field ) }">
@@ -103,26 +145,6 @@
 			<MvFUNCTIONRETURN VALUE = 0>
 		</MvIF>
 	</MvFOREACH>
-	<MvFUNCTIONRETURN VALUE = 1>
-</MvFUNCTION>
-
-<MvFUNCTION NAME = "Value_Load_ID" PARAMETERS = "id, output var" STANDARDOUTPUTLEVEL = "">
-	<MvOPENVIEW NAME	= "Merchant"
-				VIEW	= "TGCD_Values"
-				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCD_Values WHERE id = ?' }"
-				FIELDS	= "l.id">
-	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
-		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-VALUE-0002', g.MvOPENVIEW_Error ) }">
-	</MvIF>
-
-	<MvIF EXPR = "{ TGCD_Values.d.EOF }">
-		<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Values">
-		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_DB ].Error_Load_EOF( 'TGCD-VALUE-0003' ) }">
-	</MvIF>
-
-	<MvEVAL EXPR = "{ Value_Read( l.output, 'TGCD_Values' ) }">
-	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Values">
-
 	<MvFUNCTIONRETURN VALUE = 1>
 </MvFUNCTION>
 
@@ -172,14 +194,36 @@
 	<MvFUNCTIONRETURN VALUE = "{ l.values_count }">
 </MvFUNCTION>
 
+<MvFUNCTION NAME = "Value_Load_GroupxField" PARAMETERS = "group_id, field_id, output var" STANDARDOUTPUTLEVEL = "">
+	<MvOPENVIEW NAME	= "Merchant"
+				VIEW	= "TGCD_ValuesGroup"
+				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCD_Values WHERE group_id = ? and field_id = ?' }"
+				FIELDS	= "l.group_id, l.field_id">
+	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-VALUE-0012', g.MvOPENVIEW_Error ) }">
+	</MvIF>
+
+	<MvIF EXPR = "{ TGCD_ValuesGroup.d.EOF }">
+		<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_ValuesGroup">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_DB ].Error_Load_EOF( 'TGCD-FIELD-0013' ) }">
+	</MvIF>
+
+	<MvEVAL EXPR = "{ Value_Read( l.output, 'TGCD_ValuesGroup' ) }">
+
+	<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_ValuesGroup">
+
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
+
 <MvFUNCTION NAME = "Value_Update_LowLevel" PARAMETERS = "value var" STANDARDOUTPUTLEVEL = "">
 	<MvQUERY NAME	= "Merchant"
 			 QUERY	= "{ 'UPDATE ' $ g.Store_Table_Prefix $ 'TGCD_Values
 					      SET
 							value	= ?
 					      WHERE
-						    id		= ?' }"
-			 FIELDS	= "l.value:value, l.value:id">
+						    group_id	= ? AND
+						    field_id	= ?' }"
+			 FIELDS	= "l.value:value, l.value:group_id, l.value:field_id">
 	<MvIF EXPR = "{ g.MvQUERY_Error }">
 		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-VALUE-0008', g.MvQUERY_Error ) }">
 	</MvIF>
@@ -205,6 +249,10 @@
 		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "field_id">
 		<MvFUNCTIONRETURN VALUE = 0>
 	</MvIF>
+
+	<MvIF EXPR = "{ NOT Value_Load_GroupxField( l.value:group_id, l.value:field_id, l.prev_value) }">
+		<MvFUNCTIONRETURN VALUE = "{ Value_Insert( l.value ) }">
+	</MvIF>
 	
 	<MvFUNCTIONRETURN VALUE = "{ Value_Update_LowLevel( l.value ) }">
 </MvFUNCTION>
@@ -222,7 +270,9 @@
 		</MvIF>
 
 		<MvIF EXPR = "{ NOT Value_Load_DataGroupField( l.data_id, l.group_id, l.field:id, l.temp_value ) }">
-			<MvFOREACHCONTINUE />
+			<MvASSIGN NAME = "l.temp_value:data_id" VALUE = "{ l.data_id }">
+			<MvASSIGN NAME = "l.temp_value:group_id" VALUE = "{ l.group_id }">
+			<MvASSIGN NAME = "l.temp_value:field_id" VALUE = "{ l.field:id }">
 		</MvIF>
 
 		<MvASSIGN NAME = "l.temp_value" MEMBER = "value" VALUE = "{ miva_variable_value( 'l.values:' $ l.member ) }">
@@ -237,6 +287,24 @@
 <MvFUNCTION NAME = "Values_Delete" PARAMETERS = "group_id" STANDARDOUTPUTLEVEL = "">
 	<MvQUERY NAME	= "Merchant"
 			 QUERY	= "{ 'DELETE FROM ' $ g.Store_Table_Prefix $ 'TGCD_Values WHERE group_id = ?' }"
+			 FIELDS	= "l.group_id">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-VALUE-0009', g.MvQUERY_Error ) }">
+	</MvIF>
+
+	<MvQUERY NAME	= "Merchant"
+			 QUERY	= "{ 'DELETE FROM ' $ g.Store_Table_Prefix $ 'TGCD_Groups WHERE group_id = ?' }"
+			 FIELDS	= "l.group_id">
+	<MvIF EXPR = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "{ g.MvQUERY_Error }">
+		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
+		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-VALUE-0009', g.MvQUERY_Error ) }">
+	</MvIF>
+
+	<MvQUERY NAME	= "Merchant"
+			 QUERY	= "{ 'DELETE FROM ' $ g.Store_Table_Prefix $ 'TGCD_GroupXField WHERE group_id = ?' }"
 			 FIELDS	= "l.group_id">
 	<MvIF EXPR = "{ g.MvQUERY_Error }">
 		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "{ g.MvQUERY_Error }">
@@ -269,50 +337,58 @@
 	<MvASSIGN NAME = "g.Data_ID"		VALUE = "{ trim( g.Data_ID ) }">
 	<MvASSIGN NAME = "l.search_query"	VALUE = "">
 
-	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_SELECT( l.search_query,'s.*' ) }">
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_SELECT( l.search_query,'g.group_id as group_id' ) }">
 
-	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_FROM( l.search_query, g.Store_Table_Prefix $ 'TGCD_Values', 's' ) }">
 
-	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_WHERE( l.search_query, 's.data_id = ?', 'g.Data_ID' ) }">
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_FROM( l.search_query, g.Store_Table_Prefix $ 'TGCD_Groups', 'g' ) }">
 
-	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_GROUP_BY( l.search_query, 's.group_id' ) }">
+	<MvASSIGN NAME = "g.Filter_List" VALUE = "{ 'group_id:g.group_id' }">
+	
+	<MvEVAL EXPR = "{ Values_Build_Queries( l.search_query, g.Data_ID, g.Filter_List ) }">
 
-	<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Filter( l.search_query, g.Filter,'id:s.id' ) }">
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_WHERE( l.search_query, 'g.data_id = ?', 'g.Data_ID' ) }">
 
-	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_OrderBy_Fields(l.search_query, g.Sort, 'id:s.id', 's.id' ) }">
+	<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Filter( l.search_query, g.Filter, g.Filter_List ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_OrderBy_Fields(l.search_query, g.Sort, g.Filter_List, 'g.group_id' ) }">
 
 	<MvASSIGN NAME = "l.search_sql" VALUE = "{ [ g.Module_Library_DB].SQL_Query_Build( l.search_query, l.search_fields ) }">
 
 	<MvIF EXPR = "{ NOT [ g.Module_Library_DB ].SQL_Query_Count( l.search_query, l.total_count ) }">
 		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Error(g.Error_Code, g.Error_Message ) }">
-	<MvELSEIF EXPR = "{ NOT [ g.Module_Library_Native_DBAPI ].DB_OPENVIEW_Range('Merchant', 'TGCD_Values', l.search_sql, l.search_fields, g.Offset, g.Count) }">
+	<MvELSEIF EXPR = "{ NOT [ g.Module_Library_Native_DBAPI ].DB_OPENVIEW_Range('Merchant', 'TGCD_Groups', l.search_sql, l.search_fields, g.Offset, g.Count) }">
 		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Error( 'TGCD-Data-JSON-0001', g.MvOPENVIEW_Error ) }">
 	</MvIF>
-
+	
 	<MvCOMMENT><MvEVAL EXPR = "{ glosub( miva_array_serialize( l.search_sql ), ',', asciichar( 10 ) ) }"></MvCOMMENT>
+	<MvCOMMENT><MvREVEALSTRUCTURE NAME="MERCHANT" VIEW="TGCD_Groups" VARIABLE="l.sql"></MvCOMMENT>
+	<MvCOMMENT><MvEVAL EXPR = "{ glosub( miva_array_serialize( l.sql ), ',', asciichar( 10 ) ) }"></MvCOMMENT>
 
 	<MvASSIGN NAME = "l.count" VALUE = 0>
+
+	<MvASSIGN NAME = "l.field_count" VALUE = "{ Load_Data_Fields( g.Data_ID, l.fields ) }">
 
 	<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Response_Start() }">
 		{
 			"data":
 				[
-					<MvWHILE EXPR = "{ ( NOT TGCD_Values.d.EOF ) AND ( ( g.Count EQ 0 ) OR (l.count LT g.Count ) ) }">
+					<MvWHILE EXPR = "{ ( NOT TGCD_Groups.d.EOF ) AND ( ( g.Count EQ 0 ) OR (l.count LT g.Count ) ) }">
 					<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_Start( l.count )}">
-					<MvFOREACH ITERATOR = "l.value" ARRAY = "l.values" COUNT = "{ Values_Load_Group( TGCD_Values.d.group_id, l.values ) }">
-						"<MvEVAL EXPR = "{ 'Fields_' $ l.value:field_code }">": "<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( l.value:value ) }">",
+
+					<MvFOREACH ITERATOR = "l.field" ARRAY = "l.fields">
+						<MvASSIGN NAME = "l.current_value" VALUE = "{ miva_variable_value( 'TGCD_Groups.d.value_' $ l.field:id ) }">
+						"<MvEVAL EXPR = "{ 'Fields_' $ l.field:code }">": "<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( l.current_value) }">",
 					</MvFOREACH>
-					"group_id": <MvEVAL EXPR = "{ int( TGCD_Values.d.group_id ) }">
+					"group_id": <MvEVAL EXPR = "{ int( TGCD_Groups.d.group_id ) }">
 					<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_End() }">
-					<MvSKIP NAME = "Merchant" VIEW = "TGCD_Values" ROWS = 1>
-					<MvASSIGN NAME = "l.real_total_count" VALUE = "{ l.real_total_count + 1 }">
+					<MvSKIP NAME = "Merchant" VIEW = "TGCD_Groups" ROWS = 1>
 					</MvWHILE>
 				],
 
-			"total_count": <MvEVAL EXPR = "{ int( l.real_total_count ) }">,
+			"total_count": <MvEVAL EXPR = "{ int( l.total_count ) }">,
 			"start_offset": <MvEVAL EXPR = "{ int( g.Offset ) }">
 		}
-		<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Values">
+		<MvCLOSEVIEW NAME = "Merchant" VIEW = "TGCD_Groups">
 	}
 </MvFUNCTION>
 
@@ -338,44 +414,27 @@
 	<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Success() }">
 </MvFUNCTION>
 
+<MvFUNCTION NAME = "Values_Build_Queries" PARAMETERS = "query var, data_id, filters" STANDARDOUTPUTLEVEL = "">
+	<MvFOREACH ITERATOR = "l.field" ARRAY = "l.fields" COUNT = "{ Load_Data_Fields( l.data_id, l.fields ) }" INDEX = "{ l.count }">
+		<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_SELECT( l.query, 'v_' $ l.field:id $ '.value AS value_' $ l.field:id ) }">
+		<MvASSIGN NAME = "{ 'g.Current_Field_' $ l.field:id }" VALUE = "{ l.field:id }">
+		<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_LEFT_OUTER_JOIN(	l.query,
+																				'g',
+																				g.Store_Table_Prefix $ 'TGCD_GroupXField',
+																				'gxf_' $ l.field:id,
+																				'g.group_id = gxf_' $ l.field:id $ '.group_id AND gxf_' $ l.field:id $ '.field_id = ?',
+																				'g.Current_Field_' $ l.field:id ) }">
 
-<MvCOMMENT>
-	SELECT * FROM s01_TGCD_Values
-	WHERE
-		data_id = 1 AND
-		(
-			( field_id = 7 AND value = "waaaaa") OR
-			( field_id = 9 AND value = "Mark" )
-		)
-	GROUP BY group_id
+		<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_LEFT_OUTER_JOIN(	l.query,
+																				'g',
+																				g.Store_Table_Prefix $ 'TGCD_Values',
+																				'v_' $ l.field:id,
+																				'v_' $ l.field:id $ '.group_id = g.group_id AND v_' $ l.field:id $ '.field_id = gxf_' $ l.field:id $ '.field_id',
+																				'' ) }">
 
-
-
-	SELECT
-		s.*
-	FROM
-		s01_TGCD_Values s
-	INNER JOIN
-		s01_TGCD_Fields fields
-	ON
-		( fields.id = s.field_id )
-	INNER JOIN
-		s01_TGCD_Values AS s1
-	ON
-		( s.group_id = s1.group_id )
-	WHERE
-		( fields.code = 'dogs' ) AND
-		( s1.value = 'Another Dog')
-	GROUP BY s.group_id
-
-
-	SELECT
-		s.*
-	FROM
-		s01_TGCD_Values s
-	WHERE
-		group_id IN ( SELECT group_id FROM s01_TGCD_Values s1 WHERE data_id = 1 AND value LIKE '%a%' )
-	GROUP BY
-		group_id
-	ORDER BY case when field_id = 7 then 1 else 2 end, value
-</MvCOMMENT>
+		<MvIF EXPR = "{ l.fiters }">
+			<MvASSIGN NAME = "l.fiters" VALUE = "{ l.filters $ ',' }">
+		</MvIF>
+		<MvASSIGN NAME = "l.filters" VALUE = "{ l.filters $ 'Fields_' $ l.field:code $ ':value_' $ l.field:id}">
+	</MvFOREACH>
+</MvFUNCTION>
