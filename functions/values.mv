@@ -344,7 +344,7 @@
 
 	<MvASSIGN NAME = "g.Filter_List" VALUE = "{ 'group_id:g.group_id' }">
 	
-	<MvEVAL EXPR = "{ Values_Build_Queries( l.search_query, g.Data_ID, g.Filter_List ) }">
+	<MvEVAL EXPR = "{ Values_Build_Queries( l.search_query, g.Data_ID, g.Filter_List, l.data_fields ) }">
 
 	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_WHERE( l.search_query, 'g.data_id = ?', 'g.Data_ID' ) }">
 
@@ -354,6 +354,8 @@
 
 	<MvASSIGN NAME = "l.search_sql" VALUE = "{ [ g.Module_Library_DB].SQL_Query_Build( l.search_query, l.search_fields ) }">
 
+	<MvCOMMENT><MvEVAL EXPR = "{ g.Filter_List }"></MvCOMMENT>
+	
 	<MvIF EXPR = "{ NOT [ g.Module_Library_DB ].SQL_Query_Count( l.search_query, l.total_count ) }">
 		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Error(g.Error_Code, g.Error_Message ) }">
 	<MvELSEIF EXPR = "{ NOT [ g.Module_Library_Native_DBAPI ].DB_OPENVIEW_Range('Merchant', 'TGCD_Groups', l.search_sql, l.search_fields, g.Offset, g.Count) }">
@@ -366,8 +368,6 @@
 
 	<MvASSIGN NAME = "l.count" VALUE = 0>
 
-	<MvASSIGN NAME = "l.field_count" VALUE = "{ Load_Data_Fields( g.Data_ID, l.fields ) }">
-
 	<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Response_Start() }">
 		{
 			"data":
@@ -375,7 +375,7 @@
 					<MvWHILE EXPR = "{ ( NOT TGCD_Groups.d.EOF ) AND ( ( g.Count EQ 0 ) OR (l.count LT g.Count ) ) }">
 					<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_Start( l.count )}">
 
-					<MvFOREACH ITERATOR = "l.field" ARRAY = "l.fields">
+					<MvFOREACH ITERATOR = "l.field" ARRAY = "l.data_fields">
 						<MvASSIGN NAME = "l.current_value" VALUE = "{ miva_variable_value( 'TGCD_Groups.d.value_' $ l.field:id ) }">
 						"<MvEVAL EXPR = "{ 'Fields_' $ l.field:code }">": "<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( l.current_value) }">",
 					</MvFOREACH>
@@ -414,8 +414,8 @@
 	<MvFUNCTIONRETURN VALUE = "{ [ g.Module_JSON ].JSON_Response_Success() }">
 </MvFUNCTION>
 
-<MvFUNCTION NAME = "Values_Build_Queries" PARAMETERS = "query var, data_id, filters" STANDARDOUTPUTLEVEL = "">
-	<MvFOREACH ITERATOR = "l.field" ARRAY = "l.fields" COUNT = "{ Load_Data_Fields( l.data_id, l.fields ) }" INDEX = "{ l.count }">
+<MvFUNCTION NAME = "Values_Build_Queries" PARAMETERS = "query var, data_id, filters var, fields var" STANDARDOUTPUTLEVEL = "">
+	<MvFOREACH ITERATOR = "l.field" ARRAY = "l.fields" COUNT = "{ Load_Data_Fields( l.data_id, l.fields ) }">
 		<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_SELECT( l.query, 'v_' $ l.field:id $ '.value AS value_' $ l.field:id ) }">
 		<MvASSIGN NAME = "{ 'g.Current_Field_' $ l.field:id }" VALUE = "{ l.field:id }">
 		<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_LEFT_OUTER_JOIN(	l.query,
@@ -432,9 +432,9 @@
 																				'v_' $ l.field:id $ '.group_id = g.group_id AND v_' $ l.field:id $ '.field_id = gxf_' $ l.field:id $ '.field_id',
 																				'' ) }">
 
-		<MvIF EXPR = "{ l.fiters }">
-			<MvASSIGN NAME = "l.fiters" VALUE = "{ l.filters $ ',' }">
+		<MvIF EXPR = "{ l.filters }">
+			<MvASSIGN NAME = "l.filters" VALUE = "{ l.filters $ ',' }">
 		</MvIF>
-		<MvASSIGN NAME = "l.filters" VALUE = "{ l.filters $ 'Fields_' $ l.field:code $ ':value_' $ l.field:id}">
+		<MvASSIGN NAME = "l.filters" VALUE = "{ l.filters $ 'Fields_' $ l.field:code $ ':v_' $ l.field:id $ '.value' }">
 	</MvFOREACH>
 </MvFUNCTION>
