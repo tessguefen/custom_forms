@@ -84,5 +84,72 @@
 	<MvFUNCTIONRETURN VALUE = 1>
 </MvFUNCTION>
 
-<MvFUNCTION NAME = "FrontEnd_Load_Data" PARAMETERS = "data_code, simple_search, advanced_search, output var">
+<MvFUNCTION NAME = "FrontEnd_Load_Data" PARAMETERS = "data_code, simple_search, advanced_search, output var" STANDARDOUTPUTLEVEL = "">
+	<MvIF EXPR = "{ NOT Data_Load_Code( l.data_code, l.data ) }">
+		<MvASSIGN NAME = "l.error:message" VALUE = "The Data form does not exist.">
+		<MvASSIGN NAME = "l.error:name" VALUE = "Form_Code">
+		<MvASSIGN NAME = "l.void" VALUE = "{ miva_array_insert_var( g.TGCD_Errors, l.error, -1 ) }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvIF EXPR = "{ miva_array_elements( l.advanced_search ) GT 0 }">
+		<MvASSIGN NAME = "l.void" VALUE = "{ FrontEnd_Build_AdvancedSearch( l.advanced_search, g.Filter ) }">
+	</MvIF>
+
+	<MvASSIGN NAME = "g.Filter"			VALUE = "{ trim( g.Filter ) }">
+	<MvASSIGN NAME = "g.Sort"			VALUE = "{ trim( g.Sort ) }">
+	<MvASSIGN NAME = "g.Offset"			VALUE = "{ trim( g.Offset ) }">
+	<MvASSIGN NAME = "g.Count"			VALUE = "{ trim( g.Count ) }">
+	<MvIF EXPR = "{ NOT g.Count }">
+		<MvASSIGN NAME = "g.Count" VALUE = "24">
+	</MvIF>
+	<MvASSIGN NAME = "g.Data_ID"		VALUE = "{ l.data:id }">
+	<MvASSIGN NAME = "l.search_query"	VALUE = "">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_SELECT( l.search_query,'g.group_id as group_id' ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_FROM( l.search_query, g.Store_Table_Prefix $ 'TGCD_Groups', 'g' ) }">
+
+	<MvASSIGN NAME = "g.Filter_List" VALUE = "{ 'group_id:g.group_id' }">
+	
+	<MvEVAL EXPR = "{ Values_Build_Queries( l.search_query, g.Data_ID, g.Filter_List, l.data_fields ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_WHERE( l.search_query, 'g.data_id = ?', 'g.Data_ID' ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Filter( l.search_query, g.Filter, g.Filter_List ) }">
+
+	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_OrderBy_Fields(l.search_query, g.Sort, g.Filter_List, 'g.group_id' ) }">
+
+	<MvASSIGN NAME = "l.search_sql" VALUE = "{ [ g.Module_Library_DB].SQL_Query_Build( l.search_query, l.search_fields ) }">
+
+	<MvIF EXPR = "{ NOT [ g.Module_Library_DB ].SQL_Query_Count( l.search_query, l.total_count ) }">
+		<MvASSIGN NAME = "l.error:message" VALUE = "{ g.Error_Message }">
+		<MvASSIGN NAME = "l.error:name" VALUE = "{ g.Error_Code }">
+		<MvASSIGN NAME = "l.void" VALUE = "{ miva_array_insert_var( g.TGCD_Errors, l.error, -1 ) }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	<MvELSEIF EXPR = "{ NOT [ g.Module_Library_Native_DBAPI ].DB_OPENVIEW_Range('Merchant', 'TGCD_Groups', l.search_sql, l.search_fields, g.Offset, g.Count) }">
+		<MvASSIGN NAME = "l.error:message" VALUE = "{ g.MvOPENVIEW_Error }">
+		<MvASSIGN NAME = "l.error:name" VALUE = "DB_ERROR">
+		<MvASSIGN NAME = "l.void" VALUE = "{ miva_array_insert_var( g.TGCD_Errors, l.error, -1 ) }">
+		<MvFUNCTIONRETURN VALUE = 0>
+	</MvIF>
+
+	<MvWHILE EXPR = "{ ( NOT TGCD_Groups.d.EOF ) AND ( ( g.Count EQ 0 ) OR ( l.count LT g.Count ) ) }">
+		<MvASSIGN NAME = "l.count" VALUE = "{ l.count + 1 }" />
+		<MvASSIGN NAME = "l.output:data" INDEX = "{ l.count }" MEMBER = "group_id" VALUE = "{ TGCD_Groups.d.group_id }">
+		<MvFOREACH ITERATOR = "l.field" ARRAY = "l.data_fields">
+			<MvASSIGN NAME = "l.output:data" INDEX = "{ l.count }" MEMBER = "{ l.field:code }" VALUE = "{ miva_variable_value( 'TGCD_Groups.d.value_' $ l.field:id )}">
+		</MvFOREACH>
+		<MvSKIP NAME = "Merchant" VIEW = "TGCD_Groups" ROWS = 1>
+	</MvWHILE>
+	<MvASSIGN NAME = "l.output" MEMBER = "total_count" VALUE = "{ l.total_count }">
+</MvFUNCTION>
+
+<MvFUNCTION NAME = "FrontEnd_Build_AdvancedSearch" PARAMETERS = "array var, filter_output var" STANDARDOUTPUTLEVEL = "">
+	<MvFOREACH ITERATOR = "l.search" ARRAY = "l.array">
+		<MvIF EXPR = "{ l.filter_output }">
+			<MvASSIGN NAME = "l.filter_output" VALUE = "{ l.filter_output $ '|' }">
+		</MvIF>
+		<MvASSIGN NAME = "l.filter_output" VALUE = "{ l.filter_output $ 'search%3AFields_' $ l.search:code $ '%25253A' $ l.search:operator $ '%25253A' $ l.search:value }">
+	</MvFOREACH>
 </MvFUNCTION>

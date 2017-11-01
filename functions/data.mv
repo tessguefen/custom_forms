@@ -227,8 +227,8 @@
 					<MvWHILE EXPR = "{ ( NOT TGCD_Data.d.EOF ) AND ( ( g.Count EQ 0 ) OR (l.count LT g.Count ) ) }">
 					<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_Start( l.count )}">
 					"id": <MvEVAL EXPR = "{ int( TGCD_Data.d.id ) }">,
-					"code" : "<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCD_Data.d.code ) }">",
-					"name" : "<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCD_Data.d.name ) }">"
+					"code" : "<MvEVAL EXPR = "{ encodejavascriptstring( TGCD_Data.d.code ) }">",
+					"name" : "<MvEVAL EXPR = "{ encodejavascriptstring( TGCD_Data.d.name ) }">"
 					<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_End() }">
 					<MvSKIP NAME = "Merchant" VIEW = "TGCD_Data" ROWS = 1>
 					</MvWHILE>

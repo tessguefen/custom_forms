@@ -341,7 +341,6 @@
 
 	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_SELECT( l.search_query,'g.group_id as group_id' ) }">
 
-
 	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_FROM( l.search_query, g.Store_Table_Prefix $ 'TGCD_Groups', 'g' ) }">
 
 	<MvASSIGN NAME = "g.Filter_List" VALUE = "{ 'group_id:g.group_id' }">

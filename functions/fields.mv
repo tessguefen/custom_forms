@@ -332,10 +332,10 @@
 				<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_Start( l.field_count ) }">
 				"id":			<MvEVAL EXPR = "{ int( TGCD_Fields.d.field_id ) }">,
 				"data_id":		<MvEVAL EXPR = "{ int( TGCD_Fields.d.field_data_id ) }">,
-				"code":			"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCD_Fields.d.field_code ) }">",
+				"code":			"<MvEVAL EXPR = "{ encodejavascriptstring( TGCD_Fields.d.field_code ) }">",
 				"disp_order":	<MvEVAL EXPR = "{ int( TGCD_Fields.d.field_disp_order ) }">,
-				"prompt":		"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCD_Fields.d.field_prompt ) }">",
-				"type":			"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCD_Fields.d.field_type ) }">",
+				"prompt":		"<MvEVAL EXPR = "{ encodejavascriptstring( TGCD_Fields.d.field_prompt ) }">",
+				"type":			"<MvEVAL EXPR = "{ encodejavascriptstring( TGCD_Fields.d.field_type ) }">",
 				"required":		<MvEVAL EXPR = "{ int( TGCD_Fields.d.field_required ) }">,
 				"admin":		<MvEVAL EXPR = "{ int( TGCD_Fields.d.field_admin ) }">
 				
@@ -359,8 +359,8 @@
 				"id":			<MvEVAL EXPR = "{ int( TGCD_Fields.d.opt_id ) }">,
 				"field_id":		<MvEVAL EXPR = "{ int( TGCD_Fields.d.opt_field_id ) }">,
 				"disp_order":	<MvEVAL EXPR = "{ int( TGCD_Fields.d.opt_disp_order ) }">,
-				"code":			"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCD_Fields.d.opt_code ) }">",
-				"prompt":		"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCD_Fields.d.opt_prompt ) }">"
+				"code":			"<MvEVAL EXPR = "{ encodejavascriptstring( TGCD_Fields.d.opt_code ) }">",
+				"prompt":		"<MvEVAL EXPR = "{ encodejavascriptstring( TGCD_Fields.d.opt_prompt ) }">"
 
 				<MvASSIGN NAME = "l.total_count"		VALUE = "{ l.total_count + 1 }">
 				<MvASSIGN NAME = "l.last_opt_id"	VALUE = "{ TGCD_Fields.d.opt_id }">
@@ -501,9 +501,9 @@
 				<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_Start( l.count )}">
 					"id": <MvEVAL EXPR = "{ int( l.field:id ) }">,
 					"data_id": <MvEVAL EXPR = "{ int( l.field:data_id ) }">,
-					"code" : "<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( l.field:code ) }">",
-					"prompt" : "<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( l.field:prompt ) }">",
-					"type" : "<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( l.field:type ) }">",
+					"code" : "<MvEVAL EXPR = "{ encodejavascriptstring( l.field:code ) }">",
+					"prompt" : "<MvEVAL EXPR = "{ encodejavascriptstring( l.field:prompt ) }">",
+					"type" : "<MvEVAL EXPR = "{ encodejavascriptstring( l.field:type ) }">",
 					"required": <MvEVAL EXPR = "{ int( l.field:required ) }">,
 					"admin": <MvEVAL EXPR = "{ int( l.field:admin ) }">,
 					"disp_order": <MvEVAL EXPR = "{ int( l.field:disp_order ) }">
@@ -515,8 +515,8 @@
 								{
 									"id": <MvEVAL EXPR = "{ int( l.option:id ) }">,
 									"field_id": <MvEVAL EXPR = "{ int( l.option:field_id ) }">,
-									"code": "<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( l.option:code ) }">",
-									"prompt": "<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( l.option:prompt ) }">",
+									"code": "<MvEVAL EXPR = "{ encodejavascriptstring( l.option:code ) }">",
+									"prompt": "<MvEVAL EXPR = "{ encodejavascriptstring( l.option:prompt ) }">",
 									"disp_order": <MvEVAL EXPR = "{ int( l.option:disp_order ) }">
 								}
 							</MvFOREACH>
