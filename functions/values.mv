@@ -373,7 +373,7 @@
 
 					<MvFOREACH ITERATOR = "l.field" ARRAY = "l.data_fields">
 						<MvASSIGN NAME = "l.current_value" VALUE = "{ miva_variable_value( 'TGCD_Groups.d.value_' $ l.field:id ) }">
-						"<MvEVAL EXPR = "{ 'Fields_' $ l.field:code }">": "<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( l.current_value) }">",
+						"<MvEVAL EXPR = "{ 'Fields_' $ l.field:code }">": <MvIF EXPR = "{ isdigit( l.current_value) AND ( len_var( l.current_value ) GT 0 ) }"><MvEVAL EXPR = "{ encodejavascriptstring( l.current_value) }"><MvELSE>"<MvEVAL EXPR = "{ encodejavascriptstring( l.current_value) }">"</MvIF>,
 					</MvFOREACH>
 					"group_id": <MvEVAL EXPR = "{ int( TGCD_Groups.d.group_id ) }">
 					<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_ArrayElement_End() }">

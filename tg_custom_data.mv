@@ -19,11 +19,11 @@ sXX_TGCD_Data
 
 
 sXX_TGCD_Fields
-+----------------------+--------------------+------+--------+-----------------------------------------+----------+---------------+
-|          id          |      data_id       | code | prompt |                  type                   | required |  disp_order   |
-+----------------------+--------------------+------+--------+-----------------------------------------+----------+---------------+
-| TGCD_Fields StoreKey | Associated Data ID | Code | Prompt | text, textarea, radio, checkbox, select | 1/0      | Display Order |
-+----------------------+--------------------+------+--------+-----------------------------------------+----------+---------------+
++----------------------+--------------------+------+--------+-----------------------------------------+----------+----------+---------------+
+|          id          |      data_id       | code | prompt |                  type                   | required | admin    |  disp_order   |
++----------------------+--------------------+------+--------+-----------------------------------------+----------+----------+---------------+
+| TGCD_Fields StoreKey | Associated Data ID | Code | Prompt | text, textarea, radio, checkbox, select | 1/0      | 1/0      | Display Order |
++----------------------+--------------------+------+--------+-----------------------------------------+----------+----------+---------------+
 
 sXX_TGCD_Options
 +-----------------------+---------------------+------+--------+---------------+
@@ -106,6 +106,7 @@ sXX_TGCD_Groups
 					 					prompt		' $ [ g.Module_Library_Native_DBAPI ].DB_Type_CHAR( 255 )		$ ',
 					 					type		' $ [ g.Module_Library_Native_DBAPI ].DB_Type_CHAR( 255 )		$ ',
 					 					required	' $ [ g.Module_Library_Native_DBAPI ].DB_Type_BOOL()			$ ',
+					 					admin	' $ [ g.Module_Library_Native_DBAPI ].DB_Type_BOOL()			$ ',
 					 					disp_order	' $ [ g.Module_Library_Native_DBAPI ].DB_Type_NUMBER( 0, 0 )	$ '
 					 				) ' }">
 	<MvIF EXPR = "{ g.MvQUERY_Error }">

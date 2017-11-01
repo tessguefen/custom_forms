@@ -20,6 +20,10 @@
 	</MvIF>
 
 	<MvFOREACH ITERATOR = "l.field" ARRAY = "l.fields" COUNT = "{ Load_Data_Fields( l.data:id, l.fields) }">
+		<MvIF EXPR = "{ l.field:admin EQ 1 }">
+			<MvASSIGN NAME = "{ 'g.Fields:' $ l.field:code }" VALUE = "">
+			<MvFOREACHCONTINUE />
+		</MvIF>
 		<MvASSIGN NAME = "l.current_value" VALUE = "{ trim( miva_variable_value( 'g.Fields:' $ l.field:code )) }">	
 		<MvASSIGN NAME = "l.void" VALUE = "{ FrontEnd_Validate_Field( l.field, l.current_value, g.TGCD_Errors) }">
 	</MvFOREACH>
@@ -67,9 +71,14 @@
 
 	<MvASSIGN NAME = "l.return:data" VALUE = "{ l.data }">
 
-	<MvFOREACH ITERATOR = "l.field" ARRAY = "l.return:fields" COUNT = "{ Load_Data_Fields( l.data:id, l.return:fields) }">
+	<MvFOREACH ITERATOR = "l.field" ARRAY = "l.fields" COUNT = "{ Load_Data_Fields( l.data:id, l.fields) }">
+		<MvIF EXPR = "{ l.field:admin EQ 1 }">
+			<MvFOREACHCONTINUE />
+		</MvIF>
+
 		<MvASSIGN NAME = "l.field" MEMBER = "value" VALUE = "{ trim( miva_variable_value( 'g.Fields:' $ l.field:code )) }">
 		<MvASSIGN NAME = "l.void" VALUE = "{ Load_Field_Options( l.field:id, l.field:options ) }">
+		<MvASSIGN NAME = "l.void" VALUE = "{ miva_array_insert_var( l.return:fields, l.field, -1 ) }">
 	</MvFOREACH>
 
 	<MvFUNCTIONRETURN VALUE = 1>

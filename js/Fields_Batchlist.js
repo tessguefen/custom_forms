@@ -91,15 +91,18 @@ FieldsBatchlist.prototype.onCreateRootColumnList = function() {
 		self.fields_data_id			=	new MMBatchList_Column_Name( 'Data ID', 'data_id', 'data_id')
 											.SetDisplayInMenu(false)
 											.SetDisplayInList(false)
-											.SetAdvancedSearchEnabled(false);
+											.SetAdvancedSearchEnabled(false)
+											.SetContentAttributeList( { 'class': 'mm9_batchlist_level_col' } );
 		self.fields_code			=	new MMBatchList_Column_Text( 'Code', 'code', 'code' )
 											.SetContentAttributeList( { 'class': 'mm9_batchlist_level_col' } );
 		self.fields_prompt			=	new MMBatchList_Column_Text( 'Prompt', 'prompt', 'prompt' )
 											.SetContentAttributeList( { 'class': 'mm9_batchlist_level_col' } );
-		self.fields_type			=	new Fields_Column_Type()
-											.SetContentAttributeList( { 'class': 'mm9_batchlist_level_col' } );
+		self.fields_type			=	new Fields_Column_Type();
 		self.fields_required		=	new MMBatchList_Column_Checkbox( 'Required', 'required', 'required')
 											.SetContentAttributeList( { 'class': 'mm9_batchlist_level_col' } );
+		self.fields_admin			=	new MMBatchList_Column_Checkbox( 'Admin Only', 'admin', 'Admin_Only')
+											.SetContentAttributeList( { 'class': 'mm9_batchlist_level_col' } );
+
 		self.fields_display_order	=	new MMBatchList_Column( 'Display Order', 'disp_order')
 										.SetDisplayInList( false )
 										.SetSearchable( false )
@@ -113,6 +116,7 @@ FieldsBatchlist.prototype.onCreateRootColumnList = function() {
 		self.fields_prompt,
 		self.fields_type,
 		self.fields_required,
+		self.fields_admin,
 		self.fields_display_order
 	];
 
@@ -124,7 +128,13 @@ FieldsBatchlist.prototype.CreateColumnList_Options = function() {
 	var columnlist =
 	[
 		new MMBatchList_Column_Code( 'ID', 'id', 'id' )
-				.SetRootColumn( self.fields_id ),
+				.SetRootColumn( self.fields_data_id )
+				.SetSearchable( false )
+				.SetDisplayInList( false ),
+		new MMBatchList_Column_Code( 'Field_ID', 'field_id', 'field_id' )
+				.SetRootColumn( self.fields_id )
+				.SetSearchable( false )
+				.SetDisplayInList( false ),
 		new MMBatchList_Column_Name( 'Code', 'code', 'code' )
 				.SetRootColumn( self.fields_code ),
 		new MMBatchList_Column_Name( 'Prompt', 'prompt', 'prompt' )
@@ -243,6 +253,7 @@ FieldsBatchlist.prototype.Option_Create = function() {
 
 	record				= new Object();
 	record.id			= 0;
+	record.field_id		= 0;
 	record.code			= '';
 	record.prompt		= '';
 	record.disp_order	= 0;

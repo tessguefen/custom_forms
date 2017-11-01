@@ -30,6 +30,15 @@ function ValuesBatchlist_Function( fieldlist, _function, callback, delegator ) {
 									   delegator );
 }
 
+function ValuesBatchlist_Checkbox_Function( fieldlist, field_name, checked, delegator ) {
+	fieldlist.forEach( function(field) {
+		if ( field.name == field_name ) {
+			field.value = ( checked ? 1 : 0 );
+		}
+	});
+	ValuesBatchlist_Function( fieldlist, 'Values_Update', function( response ) {}, delegator );
+}
+
 function ValuesBatchlist( data_id ) {
 	var self = this;
 	ValuesBatchlist_Load_Fields( data_id, function( response) {
@@ -61,12 +70,19 @@ ValuesBatchlist.prototype.onCreateRootColumnList = function() {
 			columnlist.push( new Select_Radio_Column( self.fields[ i ] ) );
 		} else if ( self.fields[ i ].type == 'image' ) {
 			columnlist.push( new MMBatchList_Column_Image_Upload( self.fields[ i ].prompt, 'Fields_' + self.fields[ i ].code, 'Fields:' + self.fields[ i ].code ) );
-		} else if ( self.fields[ i ].type == 'checkbox' ) {
-			columnlist.push( new MMBatchList_Column_Checkbox( self.fields[ i ].prompt, 'Fields_' + self.fields[ i ].code, 'Fields:' + self.fields[ i ].code ) );
 		} else if ( self.fields[ i ].type == 'memo' ) {
 			columnlist.push( new MMBatchList_Column_TextArea( 'Edit ' + self.fields[ i ].prompt, self.fields[ i ].prompt, 'Fields_' + self.fields[ i ].code, 'Fields:' + self.fields[ i ].code ) );
 		} else if ( self.fields[ i ].type == 'date' ) {
-			columnlist.push( new MMBatchList_Column_DateTime( self.fields[ i ].prompt, 'Fields_' + self.fields[ i ].code, 'Fields:' + self.fields[ i ].code ) );
+			columnlist.push(
+				new MMBatchList_Column_DateTime( self.fields[ i ].prompt, 'Fields_' + self.fields[ i ].code, 'Fields:' + self.fields[ i ].code )
+				.SetOnDisplayEdit( function( record ) {
+					var current_val = record[ this.code ];
+					if ( !current_val ) { var current_val = ( ( new Date() ).getTime() ) / 1000; }
+					return DrawMMBatchListDateTime_Edit( this.code, current_val );
+				} )
+			);
+		} else if ( self.fields[ i ].type == 'checkbox' ) {
+			columnlist.push( new MMBatchList_Column_CheckboxSlider( self.fields[ i ].prompt, 'Fields_' + self.fields[ i ].code, 'Fields:' + self.fields[ i ].code, function( item, checked, delegator ) { ValuesBatchlist_Checkbox_Function( item.record.mmbatchlist_fieldlist, this.field_name, checked, delegator ); }));
 		} else {
 			columnlist.push( new MMBatchList_Column_Name( self.fields[ i ].prompt, 'Fields_' + self.fields[ i ].code, 'Fields:' + self.fields[ i ].code ) );
 		}

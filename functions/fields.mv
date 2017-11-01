@@ -33,6 +33,7 @@
 	<MvASSIGN NAME = "l.field" MEMBER = "prompt"		VALUE = "{ miva_variable_value( l.view $ '.d.prompt' ) }">
 	<MvASSIGN NAME = "l.field" MEMBER = "type"			VALUE = "{ miva_variable_value( l.view $ '.d.type' ) }">
 	<MvASSIGN NAME = "l.field" MEMBER = "required"		VALUE = "{ miva_variable_value( l.view $ '.d.required' ) }">
+	<MvASSIGN NAME = "l.field" MEMBER = "admin"			VALUE = "{ miva_variable_value( l.view $ '.d.admin' ) }">
 	<MvASSIGN NAME = "l.field" MEMBER = "disp_order"	VALUE = "{ miva_variable_value( l.view $ '.d.disp_order' ) }">
 </MvFUNCTION>
 
@@ -42,10 +43,10 @@
 
 	<MvQUERY NAME	= "Merchant"
 			 QUERY	= "{ 'INSERT INTO ' $ g.Store_Table_Prefix $ 'TGCD_Fields
-					      ( id, data_id, code, prompt, type, required, disp_order )
+					      ( id, data_id, code, prompt, type, required, admin, disp_order )
 						  VALUES
-						  ( ?, ?, ?, ?, ?, ?, ?  )' }"
-			 FIELDS	= "l.field:id, l.field:data_id, l.field:code, l.field:prompt, l.field:type, l.field:required, l.field:disp_order">
+						  ( ?, ?, ?, ?, ?, ?, ?, ?  )' }"
+			 FIELDS	= "l.field:id, l.field:data_id, l.field:code, l.field:prompt, l.field:type, l.field:required, l.field:admin, l.field:disp_order">
 	<MvIF EXPR = "{ g.MvQUERY_Error }">
 		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-FIELD-0001', g.MvQUERY_Error ) }">
 	</MvIF>
@@ -58,6 +59,7 @@
 	<MvASSIGN NAME = "l.field:prompt"		VALUE = "{ trim( l.field:prompt ) }">
 	<MvASSIGN NAME = "l.field:type"			VALUE = "{ trim( l.field:type ) }">
 	<MvASSIGN NAME = "l.field:required"		VALUE = "{ trim( l.field:required ) }">
+	<MvASSIGN NAME = "l.field:admin"		VALUE = "{ trim( l.field:admin ) }">
 	<MvASSIGN NAME = "l.field:disp_order"	VALUE = "{ trim( l.field:disp_order ) }">
 
 	<MvIF EXPR = "{ NOT Data_Load_ID( l.field:data_id, l.data ) }">
@@ -92,6 +94,10 @@
 
 	<MvIF EXPR = "{ ISNULL l.field:required }">
 		<MvASSIGN NAME = "l.field:required" VALUE = "0" />
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.field:admin }">
+		<MvASSIGN NAME = "l.field:admin" VALUE = "0" />
 	</MvIF>
 
 	<MvIF EXPR = "{ ISNULL l.field:disp_order }">
@@ -160,10 +166,11 @@
 							code		= ?,
 							prompt		= ?,
 							type		= ?,
-							required	= ?
+							required	= ?,
+							admin		= ?
 					      WHERE
 						    id		= ?' }"
-			 FIELDS	= "l.field:code, l.field:prompt, l.field:type, l.field:required, l.field:id">
+			 FIELDS	= "l.field:code, l.field:prompt, l.field:type, l.field:required, l.field:admin, l.field:id">
 	<MvIF EXPR = "{ g.MvQUERY_Error }">
 		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-FIELD-0006', g.MvQUERY_Error ) }">
 	</MvIF>
@@ -184,6 +191,7 @@
 	<MvASSIGN NAME = "l.field:prompt"		VALUE = "{ trim( l.field:prompt ) }">
 	<MvASSIGN NAME = "l.field:type"			VALUE = "{ trim( l.field:type ) }">
 	<MvASSIGN NAME = "l.field:required"		VALUE = "{ trim( l.field:required ) }">
+	<MvASSIGN NAME = "l.field:admin"		VALUE = "{ trim( l.field:admin ) }">
 	<MvASSIGN NAME = "l.field:disp_order"	VALUE = "{ trim( l.field:disp_order ) }">
 
 	<MvIF EXPR = "{ ISNULL l.field:code }">
@@ -212,6 +220,10 @@
 
 	<MvIF EXPR = "{ ISNULL l.field:required }">
 		<MvASSIGN NAME = "l.field:required" VALUE = "0" />
+	</MvIF>
+
+	<MvIF EXPR = "{ ISNULL l.field:admin }">
+		<MvASSIGN NAME = "l.field:admin" VALUE = "0" />
 	</MvIF>
 
 	<MvIF EXPR = "{ l.field:code NE l.prev_field:code }">
@@ -265,6 +277,7 @@
 																				 field.prompt			AS field_prompt,
 																				 field.type				AS field_type,
 																				 field.required			AS field_required,
+																				 field.admin			as field_admin,
 																				 field.disp_order		AS field_disp_order,
 																				 opt.id				AS opt_id,
 																				 opt.field_id		AS opt_field_id,
@@ -275,13 +288,14 @@
 	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_LEFT_OUTER_JOIN( l.search_query, 'field', g.Store_Table_Prefix $ 'TGCD_Options', 'opt', 'opt.field_id = field.id', '' ) }">
 	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_WHERE( l.search_query, 'field.data_id = ?', 'g.data_id' ) }">
 
-	<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Filter( l.search_query, g.Filter,'code:field.code;opt.code,prompt:field.prompt;opt.prompt,type:field.type,required:field.required' ) }">
+	<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Filter( l.search_query, g.Filter,'code:field.code;opt.code,prompt:field.prompt;opt.prompt,type:field.type,required:field.required,admin:field.admin' ) }">
 
 	<MvEVAL EXPR = "{ [ g.Module_Library_DB ].SQL_Query_OrderBy_Fields( l.search_query, g.Sort,
 																		'code:field.code;opt.code,
 																		prompt:field.prompt;opt.prompt,
 																		type:field.type,
-																		required:field.required',
+																		required:field.required,
+																		admin:field.admin',
 																		'field.disp_order;opt.disp_order' ) }">
 																			
 	<MvASSIGN NAME = "l.search_sql"			VALUE = "{ [ g.Module_Library_DB ].SQL_Query_Build( l.search_query, l.search_fields ) }">
@@ -322,7 +336,8 @@
 				"disp_order":	<MvEVAL EXPR = "{ int( TGCD_Fields.d.field_disp_order ) }">,
 				"prompt":		"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCD_Fields.d.field_prompt ) }">",
 				"type":			"<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( TGCD_Fields.d.field_type ) }">",
-				"required":		<MvEVAL EXPR = "{ int( TGCD_Fields.d.field_required ) }">
+				"required":		<MvEVAL EXPR = "{ int( TGCD_Fields.d.field_required ) }">,
+				"admin":		<MvEVAL EXPR = "{ int( TGCD_Fields.d.field_admin ) }">
 				
 				<MvASSIGN NAME = "l.total_count"		VALUE = "{ l.total_count + 1 }">
 				<MvASSIGN NAME = "l.last_field_id"	VALUE = "{ TGCD_Fields.d.field_id }">
@@ -377,6 +392,7 @@
 	<MvASSIGN NAME = "l.field:prompt"		VALUE = "{ g.Prompt }">
 	<MvASSIGN NAME = "l.field:type"			VALUE = "{ g.Type }">
 	<MvASSIGN NAME = "l.field:required"		VALUE = "{ g.Required }">
+	<MvASSIGN NAME = "l.field:admin"		VALUE = "{ g.Admin_Only }">
 	<MvASSIGN NAME = "l.field:disp_order"	VALUE = "{ g.Disp_Order }">
 
 	<MvIF EXPR = "{ NOT Field_Insert( l.field ) }">
@@ -393,6 +409,7 @@
 	<MvASSIGN NAME = "l.field:prompt"		VALUE = "{ g.Prompt }">
 	<MvASSIGN NAME = "l.field:type"			VALUE = "{ g.Type }">
 	<MvASSIGN NAME = "l.field:required"		VALUE = "{ g.Required }">
+	<MvASSIGN NAME = "l.field:admin"		VALUE = "{ g.Admin_Only }">
 	<MvASSIGN NAME = "l.field:disp_order"	VALUE = "{ g.Disp_Order }">
 
 	<MvIF EXPR = "{ NOT Field_Update( l.field ) }">
@@ -488,6 +505,7 @@
 					"prompt" : "<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( l.field:prompt ) }">",
 					"type" : "<MvEVAL EXPR = "{ [ g.Module_JSON ].JSON_Encode( l.field:type ) }">",
 					"required": <MvEVAL EXPR = "{ int( l.field:required ) }">,
+					"admin": <MvEVAL EXPR = "{ int( l.field:admin ) }">,
 					"disp_order": <MvEVAL EXPR = "{ int( l.field:disp_order ) }">
 					<MvIF EXPR = "{ Load_Field_Options( l.field:id, l.field:options ) }">
 						,
