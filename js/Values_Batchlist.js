@@ -36,7 +36,7 @@ function ValuesBatchlist( data_id ) {
 		if ( response.success ) {
 			self.fields = response.data.fields;
 			self.fields_length = self.fields.length;
-			MMBatchList.call( self, 'jsValuesBatchlist' );
+			MMBatchList.call( self, 'jsValuesBatchlist' + data_id );
 			self.Feature_SearchBar_SetPlaceholderText( 'Search Data...' );
 			self.SetDefaultSort( 'id', '-' );
 			self.Feature_Add_Enable('Add Data');

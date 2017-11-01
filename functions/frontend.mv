@@ -72,5 +72,8 @@
 		<MvASSIGN NAME = "l.void" VALUE = "{ Load_Field_Options( l.field:id, l.field:options ) }">
 	</MvFOREACH>
 
+	<MvFUNCTIONRETURN VALUE = 1>
+</MvFUNCTION>
 
+<MvFUNCTION NAME = "FrontEnd_Load_Data" PARAMETERS = "data_code, simple_search, advanced_search, output var">
 </MvFUNCTION>

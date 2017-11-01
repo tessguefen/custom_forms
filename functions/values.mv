@@ -136,7 +136,7 @@
 	</MvIF>
 
 	<MvFOREACH ITERATOR = "l.member" ARRAY = "l.members" COUNT = "{ miva_struct_members( l.values, l.members) }">
-		<MvIF EXPR = "{ NOT Field_Load_Code( l.member, l.field ) }">
+		<MvIF EXPR = "{ NOT Field_Load_Code( l.member, l.data_id, l.field ) }">
 			<MvFOREACHCONTINUE />
 		</MvIF>
 		<MvASSIGN NAME = "l.temp_value" MEMBER = "group_id" VALUE = "{ l.group_id }">
@@ -267,7 +267,7 @@
 	</MvIF>
 
 	<MvFOREACH ITERATOR = "l.member" ARRAY = "l.members" COUNT = "{ miva_struct_members( l.values, l.members) }">
-		<MvIF EXPR = "{ NOT Field_Load_Code( l.member, l.field ) }">
+		<MvIF EXPR = "{ NOT Field_Load_Code( l.member, l.data_id, l.field ) }">
 			<MvFOREACHCONTINUE />
 		</MvIF>
 
@@ -328,7 +328,7 @@
 	</script>
 
 	<MvEVAL EXPR = "{ [ g.Module_Admin ].Element_MMBatchList_HTML() }">
-	<div id="jsValuesBatchlist"></div>
+	<MvEVAL EXPR = "{ '<div id="jsValuesBatchlist' $  g.Data_ID $ '"></div>' }">
 </MvFUNCTION>
 
 <MvFUNCTION NAME = "JSON_Values_Load_Query" PARAMETERS = "module var" STANDARDOUTPUTLEVEL = "text, html, compresswhitespace">

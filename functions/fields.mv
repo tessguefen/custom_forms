@@ -98,7 +98,7 @@
 		<MvASSIGN NAME = "l.field:disp_order" VALUE = "0" />
 	</MvIF>
 
-	<MvIF EXPR = "{ Field_Load_Code( l.field:code, l.code_check ) }">
+	<MvIF EXPR = "{ Field_Load_Code( l.field:code, l.field:data_id, l.code_check ) }">
 		<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "This code already exist.">
 		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
 		<MvFUNCTIONRETURN VALUE = 0>
@@ -133,11 +133,11 @@
 	<MvFUNCTIONRETURN VALUE = 1>
 </MvFUNCTION>
 
-<MvFUNCTION NAME = "Field_Load_Code" PARAMETERS = "code, output var" STANDARDOUTPUTLEVEL = "">
+<MvFUNCTION NAME = "Field_Load_Code" PARAMETERS = "code, data_id, output var" STANDARDOUTPUTLEVEL = "">
 	<MvOPENVIEW NAME	= "Merchant"
 				VIEW	= "TGCD_Fields"
-				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCD_Fields WHERE code = ?' }"
-				FIELDS	= "l.code">
+				QUERY	= "{ 'SELECT * FROM ' $ g.Store_Table_Prefix $ 'TGCD_Fields WHERE code = ? AND data_id = ?' }"
+				FIELDS	= "l.code, l.data_id">
 	<MvIF EXPR = "{ g.MvOPENVIEW_Error }">
 		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-FIELD-0004', g.MvOPENVIEW_Error ) }">
 	</MvIF>
@@ -215,7 +215,7 @@
 	</MvIF>
 
 	<MvIF EXPR = "{ l.field:code NE l.prev_field:code }">
-		<MvIF EXPR = "{ Field_Load_Code( l.data:code, l.code_check ) AND ( l.code_check:data_id EQ l.field:data_id ) }">
+		<MvIF EXPR = "{ Field_Load_Code( l.data:code, l.field:data_id, l.code_check ) }">
 			<MvASSIGN NAME = "g.TGCD_Error:message" VALUE = "This code already exist.">
 			<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
 			<MvFUNCTIONRETURN VALUE = 0>
@@ -240,6 +240,7 @@
 		<MvASSIGN NAME = "g.TGCD_Error:name" VALUE = "code">
 		<MvFUNCTIONRETURN VALUE = "{ [ g.Module_Library_Utilities ].Error( 'TGCD-FIELD-0008', g.MvQUERY_Error ) }">
 	</MvIF>
+
 	<MvFUNCTIONRETURN VALUE = 1>
 </MvFUNCTION>
 
