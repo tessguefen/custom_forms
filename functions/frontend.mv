@@ -139,9 +139,16 @@
 		<MvASSIGN NAME = "l.output:data" INDEX = "{ l.count }" MEMBER = "group_id" VALUE = "{ TGCD_Groups.d.group_id }">
 		<MvFOREACH ITERATOR = "l.field" ARRAY = "l.data_fields">
 			<MvASSIGN NAME = "l.output:data" INDEX = "{ l.count }" MEMBER = "{ l.field:code }" VALUE = "{ miva_variable_value( 'TGCD_Groups.d.value_' $ l.field:id )}">
+			<MvASSIGN NAME = "l.temp:code" VALUE = "{ l.field:code }">
 		</MvFOREACH>
 		<MvSKIP NAME = "Merchant" VIEW = "TGCD_Groups" ROWS = 1>
 	</MvWHILE>
+
+	<MvFOREACH ITERATOR = "l.field" ARRAY = "l.data_fields">
+		<MvASSIGN NAME = "l.temp:prompt" VALUE = "{ l.field:prompt }">
+		<MvASSIGN NAME = "l.void" VALUE = "{ miva_array_insert_var( l.output:fields, l.temp, -1 ) }">
+	</MvFOREACH>
+	
 	<MvASSIGN NAME = "l.output" MEMBER = "total_count" VALUE = "{ l.total_count }">
 </MvFUNCTION>
 
@@ -150,6 +157,12 @@
 		<MvIF EXPR = "{ l.filter_output }">
 			<MvASSIGN NAME = "l.filter_output" VALUE = "{ l.filter_output $ '|' }">
 		</MvIF>
-		<MvASSIGN NAME = "l.filter_output" VALUE = "{ l.filter_output $ 'search%3AFields_' $ l.search:code $ '%25253A' $ l.search:operator $ '%25253A' $ l.search:value }">
+		<MvIF EXPR = "{ toupper( l.search:type ) EQ 'OR' }">
+			<MvASSIGN NAME = "l.filter_output" VALUE = "{ l.filter_output $ 'search_OR%3AFields_' $ l.search:code $ '%25253A' $ encodeattribute( l.search:operator ) $ '%25253A' $ encodeattribute( l.search:value ) }">
+		<MvELSEIF EXPR = "{ toupper( l.search:type ) EQ 'AND' }">
+			<MvASSIGN NAME = "l.filter_output" VALUE = "{ l.filter_output $ 'search_AND%3AFields_' $ l.search:code $ '%25253A' $ encodeattribute( l.search:operator ) $ '%25253A' $ encodeattribute( l.search:value ) }">
+		<MvELSE>
+			<MvASSIGN NAME = "l.filter_output" VALUE = "{ l.filter_output $ 'search%3AFields_' $ l.search:code $ '%25253A' $ encodeattribute( l.search:operator ) $ '%25253A' $ encodeattribute( l.search:value ) }">
+		</MvIF>
 	</MvFOREACH>
 </MvFUNCTION>

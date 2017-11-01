@@ -143,7 +143,7 @@ Select_Radio_Column.prototype.onDisplayEdit = function( record, item ) {
 	//select.options[ select.options.length ] = new Option( 'Select One', '' );
 
 	for ( i = 0, i_len = field_options.length; i < i_len; i++ ) {
-		select.options[ select.options.length ] = new Option( field_options[ i ].prompt, field_options[ i ].prompt );
+		select.options[ select.options.length ] = new Option( field_options[ i ].prompt, field_options[ i ].code );
 	}
 	if ( selected ) {
 		for ( i = 0, i_len = select.options.length; i < i_len; i++ )
@@ -159,7 +159,16 @@ Select_Radio_Column.prototype.onDisplayEdit = function( record, item ) {
 }
 
 Select_Radio_Column.prototype.onDisplayData = function( record ) {
+	var self = this;
+	var i, i_len;
+	var field_options = self.retrieveOptions[ this.code ];
 	var text = newElement( 'div', null, null, null );
+	for ( i = 0, i_len = field_options.length; i < i_len; i++ ) {
+		if ( field_options[ i ].code == record[ this.code ] ) {
+			text.innerHTML = field_options[ i ].prompt;
+			return text;
+		}
+	}
 	text.innerHTML = record[ this.code ];
 	return text;
 }
